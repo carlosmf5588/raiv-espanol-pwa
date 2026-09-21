@@ -1,0 +1,876 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>RAIV Español — PWA v7</title>
+<style>
+:root{
+  color-scheme:light dark;
+  --bg:#f3f0e8;--panel:#fffdf8;--text:#17191d;--muted:#6d6a63;--border:#d8d0c1;
+  --gold:#d5b24c;--green:#4f8a62;--red:#9e4e48;--orange:#d98447;--grey:#7e838b;
+  --blue:#537ca5;--warn:#b06d2f;
+}
+@media(prefers-color-scheme:dark){
+ :root{--bg:#15171b;--panel:#20242a;--text:#f3f2ee;--muted:#abb1b9;--border:#3b4149;}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,select{font:inherit}
+.app{max-width:1160px;margin:auto;padding:18px}
+header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:12px;margin-bottom:16px}
+h1{font-size:28px;margin:0}.sub{color:var(--muted);font-size:14px;margin-top:4px}
+.tabs{display:flex;gap:8px;overflow:auto;padding-bottom:4px}
+.tab{border:1px solid var(--border);background:var(--panel);color:var(--text);padding:10px 15px;border-radius:12px;font-weight:800;min-height:44px}
+.tab.active{background:var(--gold);color:#17191d;border-color:var(--gold)}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:16px}
+.grid{display:grid;gap:14px}.two{grid-template-columns:330px minmax(0,1fr)}
+@media(max-width:760px){.two{grid-template-columns:1fr}.app{padding:12px}h1{font-size:24px}}
+label{display:block;font-size:13px;font-weight:800;margin:10px 0 5px}
+select,input{width:100%;min-height:44px;border:1px solid var(--border);border-radius:11px;background:transparent;color:var(--text);padding:8px 10px;font-size:16px}
+.btn{min-height:44px;border:1px solid var(--border);border-radius:11px;background:var(--panel);color:var(--text);padding:9px 13px;font-weight:800}
+.btn.primary{background:var(--gold);color:#17191d;border-color:var(--gold)}
+.btn.danger{border-color:#b56b64;background:color-mix(in srgb,var(--red) 12%,var(--panel))}
+.btn.soft{background:color-mix(in srgb,var(--blue) 10%,var(--panel));border-color:color-mix(in srgb,var(--blue) 45%,var(--border))}
+.btn:disabled{opacity:.45}
+.row{display:flex;gap:8px;flex-wrap:wrap}.row>.btn{flex:1}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}
+.stat{text-align:center;border:1px solid var(--border);border-radius:12px;padding:10px}.stat b{display:block;font-size:21px}.stat span{font-size:11px;color:var(--muted)}
+.card{border:2px solid var(--gold);border-radius:18px;padding:18px;min-height:330px;background:var(--panel);white-space:pre-line}
+.card.mission-front{border-color:var(--green)}.card.mission-back{border-color:var(--red)}.card.ia{border-color:var(--orange)}
+.card.plan{border-color:var(--grey)}.card.aid{border-color:var(--orange)}
+.card h2{font-size:22px;margin:14px 0 12px}.meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.tag{display:inline-flex;border-radius:999px;padding:4px 9px;font-size:11px;font-weight:900;border:1px solid var(--border)}
+.note{font-size:12px;color:var(--muted)}.status{margin-top:12px;border:1px solid var(--border);border-radius:11px;padding:10px;color:var(--muted);font-size:13px}
+.hidden{display:none!important}.list{display:grid;gap:9px}.item{border:1px solid var(--border);border-radius:12px;padding:11px}
+.itemtop{display:flex;justify-content:space-between;gap:10px;align-items:center}.item h3{font-size:14px;margin:0}
+.sectiontitle{font-size:16px;margin:0 0 10px}.sep{border:0;border-top:1px solid var(--border);margin:16px 0}
+.empty{border:1px dashed var(--border);border-radius:14px;padding:22px;text-align:center;color:var(--muted)}
+.kicker{font-size:11px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.save-indicator{
+  display:inline-flex;align-items:center;gap:7px;
+  border:1px solid var(--border);border-radius:999px;
+  padding:6px 10px;font-size:12px;color:var(--muted);
+  background:var(--panel);white-space:nowrap
+}
+.save-dot{width:8px;height:8px;border-radius:999px;background:var(--green);display:inline-block}
+.data-panel{margin-bottom:14px;border:2px solid var(--gold)}
+.data-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.data-actions .btn{flex:1}
+.file-button{position:relative;overflow:hidden}
+.file-button input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.okline{font-size:13px;color:var(--muted);margin-top:8px}
+
+.save-dot.warn{background:var(--warn)}
+
+.global-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media(max-width:900px){.global-grid{grid-template-columns:1fr}}
+.global-zone{border:1px solid var(--border);border-radius:14px;padding:12px;min-width:0}
+.global-zone h3{font-size:13px;margin:0 0 8px}
+.global-zone .hint{font-size:11px;color:var(--muted);margin-bottom:8px}
+.conflict{border:1px solid var(--warn);border-radius:12px;padding:10px;margin-bottom:10px;font-size:13px}
+.mission-events{display:grid;gap:9px;margin-top:12px}
+.event-ref{border:1px solid var(--border);border-radius:13px;padding:12px}
+.event-ref .trigger{font-size:12px;color:var(--muted)}
+.event-ref h3{margin:3px 0 8px;font-size:15px}
+.event-detail{white-space:pre-line;margin-top:9px;border-top:1px solid var(--border);padding-top:9px;font-size:14px}
+.book{border-left:4px solid var(--blue)}
+.raiv-ref{border-left:4px solid var(--red)}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+ <div>
+   <div class="kicker">PWA v7</div>
+   <h1>RAIV Español</h1>
+   <div class="sub">Eventos · Misiones · IA Imperial</div>
+   <div id="saveIndicator" class="save-indicator" style="margin-top:8px">
+     <span id="saveDot" class="save-dot"></span>
+     <span id="saveText">Preparando guardado automático…</span>
+   </div>
+ </div>
+ <div class="tabs">
+  <button class="tab active" data-tab="events">Eventos</button>
+  <button class="tab" data-tab="missions">Misión</button>
+  <button class="tab" data-tab="ia">IA</button>
+ </div>
+</header>
+
+<section id="dataPanel" class="panel data-panel">
+  <div class="kicker">Datos privados</div>
+  <h2 class="sectiontitle" style="margin-top:4px">Contenido RAIV local</h2>
+
+  <div id="dataMissing">
+    <div>
+      Esta versión pública no contiene textos de cartas ni misiones.
+      Selecciona tu archivo privado <strong>raiv_datos_privados_v7.json</strong>.
+      El contenido se guardará únicamente en este navegador/dispositivo.
+    </div>
+    <div class="data-actions">
+      <label class="btn primary file-button" style="display:flex;align-items:center;justify-content:center;margin:0">
+        Importar datos privados
+        <input id="privateDataFile" type="file" accept=".json,application/json">
+      </label>
+    </div>
+  </div>
+
+  <div id="dataLoaded" class="hidden">
+    <div class="okline"><strong>Datos privados cargados.</strong> No tendrás que volver a seleccionarlos mientras Safari conserve los datos de esta PWA.</div>
+    <div class="data-actions">
+      <label class="btn file-button" style="display:flex;align-items:center;justify-content:center;margin:0">
+        Sustituir datos privados
+        <input id="replacePrivateDataFile" type="file" accept=".json,application/json">
+      </label>
+      <button id="forgetPrivateData" class="btn danger">Borrar datos locales</button>
+    </div>
+  </div>
+
+  <div id="dataMessage" class="status hidden"></div>
+</section>
+
+<section id="eventsTab">
+ <div class="grid two">
+  <aside class="panel">
+   <h2 class="sectiontitle">Mazo de Eventos</h2>
+   <label for="difficulty">Dificultad</label>
+   <select id="difficulty">
+    <option value="standard">Estándar · 25 al azar</option>
+    <option value="initiate">Iniciado · muy baja</option>
+    <option value="padawan">Padawan · baja</option>
+    <option value="knight">Caballero Jedi · media</option>
+    <option value="master">Maestro Jedi · alta</option>
+   </select>
+   <button id="buildDeck" class="btn primary" style="width:100%;margin-top:10px">Crear mazo</button>
+   <div class="stats">
+    <div class="stat"><b id="deckN">0</b><span>MAZO</span></div>
+    <div class="stat"><b id="discardN">0</b><span>DESCARTES</span></div>
+    <div class="stat"><b id="globalN">0</b><span>GLOBALES</span></div>
+   </div>
+   <div class="row"><button id="draw" class="btn primary" disabled>Robar</button><button id="shuffle" class="btn" disabled>Barajar</button></div>
+   <hr class="sep">
+   <div class="note">Progreso de campaña</div>
+   <div class="row" style="margin-top:8px"><button id="addPlan" class="btn" disabled>+ Plan</button><button id="addAid" class="btn" disabled>+ Ayuda</button></div>
+   <div id="eventStatus" class="status">Crea un mazo para empezar.</div>
+   <div class="status">
+     <strong>Guardado automático:</strong> el mazo, los descartes, la carta actual,
+     los Globales, la misión seleccionada y las IA activas se conservan en este navegador.
+   </div>
+  </aside>
+
+  <main class="grid">
+   <div class="panel">
+    <h2 class="sectiontitle">Carta actual</h2>
+    <div id="eventEmpty" class="empty">Todavía no has robado ninguna carta.</div>
+    <div id="eventCurrent" class="hidden">
+     <div id="eventCard" class="card">
+      <div class="meta"><span id="eventKind" class="tag"></span><span><span id="eventLevel" class="tag"></span> <span id="eventType" class="tag"></span></span></div>
+      <h2 id="eventTitle"></h2><div id="eventBody"></div>
+     </div>
+     <div class="row" style="margin-top:10px">
+      <button id="resolve" class="btn primary">Resolver</button>
+      <button id="discard" class="btn">No se puede aplicar → descartar</button>
+     </div>
+    </div>
+   </div>
+
+   <div class="panel">
+    <h2 class="sectiontitle">Globales en juego</h2>
+    <div id="globalConflict"></div>
+    <div class="global-grid">
+      <div class="global-zone">
+        <h3>Evento Global estándar</h3>
+        <div class="hint">Sólo puede haber uno. Un nuevo Global estándar sustituye al anterior.</div>
+        <div id="globalStandard"></div>
+      </div>
+      <div class="global-zone">
+        <h3>Planes Secretos activos</h3>
+        <div class="hint">Pueden acumularse y duran hasta el final de la misión.</div>
+        <div id="globalPlans" class="list"></div>
+      </div>
+      <div class="global-zone">
+        <h3>Ayudas Rebeldes activas</h3>
+        <div class="hint">Pueden acumularse y duran hasta el final de la misión.</div>
+        <div id="globalAids" class="list"></div>
+      </div>
+    </div>
+   </div>
+  </main>
+ </div>
+</section>
+
+<section id="missionsTab" class="hidden">
+ <div class="grid two">
+  <aside class="panel">
+   <h2 class="sectiontitle">Seleccionar misión</h2>
+   <label for="expansion">Expansión / grupo</label><select id="expansion"></select>
+   <label for="mission">Misión</label><select id="mission"></select>
+   <button id="loadMission" class="btn primary" style="width:100%;margin-top:10px">Abrir misión</button>
+   <div class="status">La herramienta distingue entre eventos del libro de campaña y decisiones específicas de RAIV para evitar revelar más información de la necesaria.</div>
+  </aside>
+
+  <main class="grid">
+   <div class="panel">
+    <div id="missionEmpty" class="empty">Selecciona una misión.</div>
+    <div id="missionWrap" class="hidden">
+     <div class="card mission-front">
+      <div class="meta"><span class="tag">OBJETIVOS</span><span id="missionSource" class="tag"></span></div>
+      <h2 id="missionTitle"></h2><div id="missionBody"></div>
+     </div>
+    </div>
+   </div>
+
+   <div id="missionEventsPanel" class="panel hidden">
+    <h2 class="sectiontitle">Eventos de esta misión</h2>
+    <div class="note">Pulsa únicamente el evento que se haya activado en la mesa.</div>
+    <div id="missionEvents" class="mission-events"></div>
+    <div id="genericRevealWrap" class="hidden" style="margin-top:10px">
+      <button id="genericReveal" class="btn danger">Revelar eventos del reverso · spoiler</button>
+      <div id="revealedBackEvents" class="mission-events hidden" style="margin-top:10px"></div>
+    </div>
+    <hr class="sep">
+    <button id="fullReverse" class="btn danger">Ver reverso completo · spoilers</button>
+    <div id="fullReverseBox" class="hidden" style="margin-top:10px">
+      <div class="card mission-back"><div class="meta"><span class="tag">REVERSO COMPLETO</span></div><div id="fullReverseText" style="margin-top:12px"></div></div>
+    </div>
+   </div>
+  </main>
+ </div>
+</section>
+
+<section id="iaTab" class="hidden">
+ <div class="grid two">
+  <aside class="panel">
+   <h2 class="sectiontitle">Biblioteca IA</h2>
+   <label for="iaSearch">Buscar unidad</label><input id="iaSearch" placeholder="Ej. AT-ST, Oficial, Vader…">
+   <label for="iaSelect">Carta</label><select id="iaSelect" size="8" style="height:260px"></select>
+   <button id="addIa" class="btn primary" style="width:100%;margin-top:10px">Añadir a la misión</button>
+   <div class="status">Añade las Cartas de IA de los grupos de despliegue que estén en juego. Puedes mantener varias abiertas a la vez.</div>
+  </aside>
+  <main class="panel">
+   <div class="meta"><h2 class="sectiontitle">IA activa</h2><button id="clearIa" class="btn">Vaciar</button></div>
+   <div id="iaActive" class="list"></div>
+  </main>
+ </div>
+</section>
+
+<div class="panel" style="margin-top:14px">
+  <div class="sectiontitle">Instalación en iPad</div>
+  <div class="note">
+    Abre esta PWA desde su dirección web en Safari. Después usa Compartir → Añadir a pantalla de inicio.
+    Una vez instalada, seguirá funcionando sin conexión después de haberse abierto al menos una vez con Internet.
+  </div>
+</div>
+<footer style="padding:16px 2px 4px" class="note">PWA v7 pública: el programa no incluye los datos privados RAIV. Los datos se importan y quedan almacenados localmente en el dispositivo.</footer>
+</div>
+
+<script>
+let DATA = null;
+let CARD_BY_ID = new Map();
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function drawOne(pool){if(!pool.length)return null;return pool.splice(Math.floor(Math.random()*pool.length),1)[0]}
+
+// ---------- GUARDADO AUTOMÁTICO ----------
+const SAVE_KEY="raiv_espanol_v7_state";
+const DATA_KEY="raiv_espanol_v7_private_data";
+let suppressSave=true;
+
+function cardsToIds(arr){return (arr||[]).map(c=>c&&c.id).filter(Boolean)}
+function idsToCards(arr){return (arr||[]).map(id=>CARD_BY_ID.get(id)).filter(Boolean)}
+
+function setSaveIndicator(text,ok=true){
+  const txt=$("#saveText"),dot=$("#saveDot");
+  if(txt)txt.textContent=text;
+  if(dot)dot.classList.toggle("warn",!ok);
+}
+
+function activeTabName(){
+  const b=document.querySelector(".tab.active");
+  return b?b.dataset.tab:"events";
+}
+
+function snapshotState(){
+  return {
+    schema:1,
+    savedAt:Date.now(),
+    activeTab:activeTabName(),
+    difficulty:$("#difficulty")?$("#difficulty").value:"standard",
+    events:{
+      deck:cardsToIds(ES.deck),
+      discard:cardsToIds(ES.discard),
+      current:ES.current?ES.current.id:null,
+      globalStandard:ES.globalStandard?ES.globalStandard.id:null,
+      globalPlans:cardsToIds(ES.globalPlans),
+      globalAids:cardsToIds(ES.globalAids),
+      planPool:cardsToIds(ES.planPool),
+      aidPool:cardsToIds(ES.aidPool),
+      built:!!ES.built
+    },
+    mission:{
+      expansion:$("#expansion")?$("#expansion").value:null,
+      missionId:activeMission?activeMission.id:($("#mission")?$("#mission").value:null),
+      backEventsRevealed:!!backEventsRevealed
+    },
+    ia:{
+      active:cardsToIds(iaActive)
+    }
+  };
+}
+
+function saveState(){
+  if(suppressSave || !DATA)return;
+  try{
+    const state=snapshotState();
+    localStorage.setItem(SAVE_KEY,JSON.stringify(state));
+    const t=new Date(state.savedAt).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+    setSaveIndicator("Guardado automático · "+t,true);
+  }catch(err){
+    setSaveIndicator("Guardado automático no disponible",false);
+  }
+}
+
+function restoreSavedState(){
+  let raw=null;
+  try{raw=localStorage.getItem(SAVE_KEY)}catch(err){
+    setSaveIndicator("Guardado automático no disponible",false);
+    return false;
+  }
+  if(!raw){
+    setSaveIndicator("Sin partida guardada todavía",true);
+    return false;
+  }
+
+  try{
+    const s=JSON.parse(raw);
+
+    if(s.difficulty && $("#difficulty")) $("#difficulty").value=s.difficulty;
+
+    const e=s.events||{};
+    ES.deck=idsToCards(e.deck);
+    ES.discard=idsToCards(e.discard);
+    ES.current=e.current?CARD_BY_ID.get(e.current)||null:null;
+    ES.globalStandard=e.globalStandard?CARD_BY_ID.get(e.globalStandard)||null:null;
+    ES.globalPlans=idsToCards(e.globalPlans);
+    ES.globalAids=idsToCards(e.globalAids);
+    ES.planPool=idsToCards(e.planPool);
+    ES.aidPool=idsToCards(e.aidPool);
+    ES.built=!!e.built;
+
+    const m=s.mission||{};
+    if(m.expansion && expansions.includes(m.expansion)){
+      $("#expansion").value=m.expansion;
+      fillMission(false);
+    }
+    if(m.missionId && DATA.missions.some(x=>x.id===m.missionId)){
+      $("#mission").value=m.missionId;
+      activeMission=DATA.missions.find(x=>x.id===m.missionId)||null;
+      if(activeMission){
+        showMission();
+        backEventsRevealed=!!m.backEventsRevealed;
+        $("#genericReveal").textContent=backEventsRevealed
+          ?"Ocultar eventos revelados"
+          :"Revelar eventos del reverso · spoiler";
+        renderRevealedBackEvents();
+      }
+    }
+
+    iaActive=idsToCards((s.ia||{}).active);
+    renderIa();
+    renderEvents();
+
+    if(s.activeTab){
+      $$(".tab").forEach(x=>x.classList.toggle("active",x.dataset.tab===s.activeTab));
+      ["events","missions","ia"].forEach(t=>{
+        $("#"+t+"Tab").classList.toggle("hidden",t!==s.activeTab);
+      });
+    }
+
+    const when=s.savedAt?new Date(s.savedAt).toLocaleString():"";
+    setSaveIndicator(when?"Partida recuperada · "+when:"Partida recuperada",true);
+    return true;
+  }catch(err){
+    setSaveIndicator("No se pudo recuperar el guardado",false);
+    return false;
+  }
+}
+
+$$(".tab").forEach(b=>b.addEventListener("click",()=>{
+  $$(".tab").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active");
+  ["events","missions","ia"].forEach(t=>$("#"+t+"Tab").classList.toggle("hidden",t!==b.dataset.tab));
+  saveState();
+}));
+
+// ---------- EVENTOS ----------
+const ES={
+  deck:[],discard:[],current:null,
+  globalStandard:null,globalPlans:[],globalAids:[],
+  planPool:[],aidPool:[],built:false
+};
+const mixes={
+  initiate:{I:22,II:3,III:0},
+  padawan:{I:13,II:12,III:0},
+  knight:{I:8,II:9,III:8},
+  master:{I:0,II:12,III:13}
+};
+
+function setEventStatus(t){$("#eventStatus").textContent=t}
+
+function build(){
+  let chosen=[], mode=$("#difficulty").value;
+  if(mode==="standard") chosen=shuffle(DATA.events).slice(0,25);
+  else for(const [lvl,n] of Object.entries(mixes[mode])){
+    chosen.push(...shuffle(DATA.events.filter(c=>c.level===lvl)).slice(0,n));
+  }
+  ES.planPool=shuffle(DATA.plans);
+  ES.aidPool=shuffle(DATA.aids);
+  const p=drawOne(ES.planPool), a=drawOne(ES.aidPool);
+  ES.deck=shuffle([...chosen,p,a].filter(Boolean));
+  ES.discard=[];ES.current=null;
+  ES.globalStandard=null;ES.globalPlans=[];ES.globalAids=[];
+  ES.built=true;
+  setEventStatus("Mazo creado: 25 Eventos + 1 Plan Secreto + 1 Ayuda Rebelde.");
+  renderEvents();
+}
+
+function insertRandom(card){
+  ES.deck.splice(Math.floor(Math.random()*(ES.deck.length+1)),0,card);
+}
+
+function addSpecial(kind){
+  const pool=kind==="plan"?ES.planPool:ES.aidPool;
+  const c=drawOne(pool);
+  if(!c)return;
+  insertRandom(c);
+  setEventStatus((kind==="plan"?"Plan Secreto":"Ayuda Rebelde")+" añadido al Mazo de Eventos.");
+  renderEvents();
+}
+
+function resolveCurrent(){
+  const c=ES.current;
+  if(!c)return;
+
+  if(c.type==="INSTANTÁNEO"){
+    ES.discard.push(c);ES.current=null;
+    setEventStatus("Efecto resuelto. La carta Instantánea pasa al descarte.");
+    renderEvents();
+    return;
+  }
+
+  if(c.kind==="evento"){
+    if(ES.globalStandard)ES.discard.push(ES.globalStandard);
+    ES.globalStandard=c;
+    setEventStatus("Evento Global estándar en juego. Si había otro, ha sido sustituido.");
+  }else if(c.kind==="plan"){
+    ES.globalPlans.push(c);
+    setEventStatus(
+      ES.globalAids.length
+      ?"Plan Secreto Global en juego. Debes descartar una Ayuda Rebelde Global activa."
+      :"Plan Secreto Global en juego."
+    );
+  }else{
+    ES.globalAids.push(c);
+    setEventStatus(
+      ES.globalPlans.length
+      ?"Ayuda Rebelde Global en juego. Debes descartar un Plan Secreto Global activo."
+      :"Ayuda Rebelde Global en juego."
+    );
+  }
+  ES.current=null;
+  renderEvents();
+}
+
+function removeGlobal(kind,i){
+  let c=null;
+  if(kind==="standard"){c=ES.globalStandard;ES.globalStandard=null}
+  else if(kind==="plan")c=ES.globalPlans.splice(i,1)[0];
+  else c=ES.globalAids.splice(i,1)[0];
+  if(c)ES.discard.push(c);
+  setEventStatus("Carta Global descartada.");
+  renderEvents();
+}
+
+function globalItem(c,kind,i){
+  const d=document.createElement("div");
+  d.className="item";
+  const h=document.createElement("h3");h.textContent=c.title;
+  const n=document.createElement("div");n.className="note";n.textContent=c.body;
+  const b=document.createElement("button");
+  b.className="btn";
+  b.style.width="100%";
+  b.style.marginTop="10px";
+  b.textContent="Descartar";
+  b.onclick=()=>removeGlobal(kind,i);
+  d.append(h,n,b);
+  return d;
+}
+
+function renderGlobalZones(){
+  const std=$("#globalStandard"), plans=$("#globalPlans"), aids=$("#globalAids"), conflict=$("#globalConflict");
+  std.innerHTML="";plans.innerHTML="";aids.innerHTML="";conflict.innerHTML="";
+
+  if(ES.globalStandard) std.appendChild(globalItem(ES.globalStandard,"standard",0));
+  else std.innerHTML='<div class="empty">Ninguno</div>';
+
+  if(ES.globalPlans.length) ES.globalPlans.forEach((c,i)=>plans.appendChild(globalItem(c,"plan",i)));
+  else plans.innerHTML='<div class="empty">Ninguno</div>';
+
+  if(ES.globalAids.length) ES.globalAids.forEach((c,i)=>aids.appendChild(globalItem(c,"aid",i)));
+  else aids.innerHTML='<div class="empty">Ninguna</div>';
+
+  if(ES.globalPlans.length && ES.globalAids.length){
+    conflict.innerHTML='<div class="conflict"><strong>Acción pendiente:</strong> RAIV no permite que entre un Global de un bando sin descartar uno del bando contrario. Elige y descarta una carta de la columna opuesta.</div>';
+  }
+}
+
+function renderEvents(){
+  $("#deckN").textContent=ES.deck.length;
+  $("#discardN").textContent=ES.discard.length;
+  $("#globalN").textContent=(ES.globalStandard?1:0)+ES.globalPlans.length+ES.globalAids.length;
+  $("#draw").disabled=!ES.built||!!ES.current||!ES.deck.length;
+  $("#shuffle").disabled=!ES.built||!!ES.current||ES.deck.length<2;
+  $("#addPlan").disabled=!ES.built||!ES.planPool.length;
+  $("#addAid").disabled=!ES.built||!ES.aidPool.length;
+
+  $("#eventEmpty").classList.toggle("hidden",!!ES.current);
+  $("#eventCurrent").classList.toggle("hidden",!ES.current);
+
+  if(ES.current){
+    const c=ES.current;
+    $("#eventCard").className="card "+(c.kind==="plan"?"plan":c.kind==="ayuda"?"aid":"");
+    $("#eventKind").textContent=c.kind==="evento"?"EVENTO":c.kind==="plan"?"PLAN SECRETO":"AYUDA REBELDE";
+    $("#eventLevel").textContent=c.level?"Nivel "+c.level:"";
+    $("#eventLevel").style.display=c.level?"inline-flex":"none";
+    $("#eventType").textContent=c.type;
+    $("#eventTitle").textContent=c.title;
+    $("#eventBody").textContent=c.body;
+    $("#resolve").textContent=c.type==="GLOBAL"?"Poner Global en juego":"Resolver y descartar";
+  }
+  renderGlobalZones();
+  saveState();
+}
+
+$("#buildDeck").onclick=build;
+$("#draw").onclick=()=>{
+  if(!ES.current&&ES.deck.length){
+    ES.current=ES.deck.shift();
+    setEventStatus("Carta robada.");
+    renderEvents();
+  }
+};
+$("#shuffle").onclick=()=>{
+  ES.deck=shuffle(ES.deck);
+  setEventStatus("Mazo barajado.");
+  renderEvents();
+};
+$("#resolve").onclick=resolveCurrent;
+$("#discard").onclick=()=>{
+  if(ES.current){
+    ES.discard.push(ES.current);
+    ES.current=null;
+    setEventStatus("La carta no podía aplicarse y se ha descartado. No se roba sustituta.");
+    renderEvents();
+  }
+};
+$("#addPlan").onclick=()=>addSpecial("plan");
+$("#addAid").onclick=()=>addSpecial("aid");
+$("#difficulty").onchange=()=>saveState();
+
+// ---------- MISIONES ----------
+let expansions=[];
+let activeMission=null;
+let backEventsRevealed=false;
+
+function fillExp(){
+  $("#expansion").innerHTML=expansions.map(x=>`<option>${x}</option>`).join("");
+  fillMission(true);
+}
+
+function fillMission(autoOpen=false){
+  const ex=$("#expansion").value;
+  const ms=DATA.missions.filter(m=>m.expansion===ex);
+  $("#mission").innerHTML=ms.map(m=>`<option value="${m.id}">${m.title}</option>`).join("");
+  if(autoOpen && ms.length) loadSelectedMission();
+}
+
+function detailButton(label, detailText, extraClass=""){
+  const wrap=document.createElement("div");
+  wrap.className="event-detail hidden "+extraClass;
+  wrap.textContent=detailText;
+  const b=document.createElement("button");
+  b.className="btn soft";
+  b.textContent=label;
+  b.onclick=()=>{
+    wrap.classList.toggle("hidden");
+    b.textContent=wrap.classList.contains("hidden")?label:"Ocultar";
+  };
+  return {button:b,detail:wrap};
+}
+
+function makeEventRef(ref, fromReverse=false){
+  const d=document.createElement("div");
+  d.className="event-ref "+(ref.type==="raiv"?"raiv-ref":"book");
+  const tr=document.createElement("div");
+  tr.className="trigger";
+  tr.textContent=ref.trigger;
+  const h=document.createElement("h3");
+  h.textContent=ref.name;
+  d.append(tr,h);
+  if(fromReverse){
+    const badge=document.createElement("div");
+    badge.className="note";
+    badge.style.marginBottom="8px";
+    badge.textContent="Revelado desde el reverso de la Carta de Misión";
+    d.insertBefore(badge,h);
+  }
+  if(ref.type==="campaign"){
+    const x=detailButton(
+      "Qué hacer",
+      `Evento del libro de campaña.\n\nBusca y resuelve “${ref.name}” en la misión original. RAIV no añade una decisión específica para este evento.`
+    );
+    d.append(x.button,x.detail);
+  }else{
+    const text=ref.raivText
+      ? `Instrucciones RAIV para “${ref.name}”:\n\n${ref.raivText}`
+      : `No he podido aislar automáticamente las instrucciones de “${ref.name}” en el reverso. Usa “Ver reverso completo” sólo cuando este evento se haya activado.`;
+    const x=detailButton("Ver instrucciones RAIV",text);
+    d.append(x.button,x.detail);
+  }
+  return d;
+}
+
+function renderRevealedBackEvents(){
+  const box=$("#revealedBackEvents");
+  box.innerHTML="";
+  if(!activeMission || !backEventsRevealed){
+    box.classList.add("hidden");
+    return;
+  }
+  box.classList.remove("hidden");
+  const refs=activeMission.backEventRefs||[];
+  if(refs.length){
+    refs.forEach(ref=>box.appendChild(makeEventRef(ref,true)));
+  }else{
+    const d=document.createElement("div");
+    d.className="event-detail";
+    d.textContent=activeMission.back || "No hay texto adicional detectado en el reverso.";
+    box.appendChild(d);
+  }
+}
+
+function renderMissionEvents(){
+  const box=$("#missionEvents");
+  box.innerHTML="";
+  if(!activeMission)return;
+  const refs=activeMission.eventRefs||[];
+  refs.forEach(ref=>box.appendChild(makeEventRef(ref,false)));
+
+  if(!refs.length && !activeMission.genericReveal){
+    box.innerHTML='<div class="empty">La cara visible no contiene eventos con disparadores detectados automáticamente.</div>';
+  }
+  if(!refs.length && activeMission.genericReveal){
+    box.innerHTML='<div class="empty">Los eventos están ocultos en el reverso. Revélalos sólo cuando quieras consultar la información de eventos.</div>';
+  }
+
+  $("#genericRevealWrap").classList.toggle("hidden",!activeMission.genericReveal);
+  backEventsRevealed=false;
+  $("#genericReveal").textContent="Revelar eventos del reverso · spoiler";
+  renderRevealedBackEvents();
+  $("#fullReverseBox").classList.add("hidden");
+  $("#fullReverse").textContent="Ver reverso completo · spoilers";
+}
+
+function showMission(){
+  if(!activeMission)return;
+  $("#missionEmpty").classList.add("hidden");
+  $("#missionWrap").classList.remove("hidden");
+  $("#missionEventsPanel").classList.remove("hidden");
+  $("#missionSource").textContent=activeMission.source;
+  $("#missionTitle").textContent=activeMission.title;
+  $("#missionBody").textContent=activeMission.front;
+  renderMissionEvents();
+  saveState();
+}
+
+function loadSelectedMission(){
+  const id=$("#mission").value;
+  activeMission=DATA.missions.find(m=>m.id===id) || null;
+  showMission();
+}
+
+// Evita que quede visible la misión anterior al cambiar de expansión.
+$("#expansion").onchange=()=>fillMission(true);
+// Al cambiar de misión, la carta visible cambia inmediatamente.
+$("#mission").onchange=loadSelectedMission;
+$("#loadMission").onclick=loadSelectedMission;
+
+$("#genericReveal").onclick=()=>{
+  if(!activeMission)return;
+  backEventsRevealed=!backEventsRevealed;
+  $("#genericReveal").textContent=backEventsRevealed?"Ocultar eventos revelados":"Revelar eventos del reverso · spoiler";
+  renderRevealedBackEvents();
+  saveState();
+};
+
+$("#fullReverse").onclick=()=>{
+  if(!activeMission)return;
+  $("#fullReverseText").textContent=activeMission.back;
+  $("#fullReverseBox").classList.toggle("hidden");
+  $("#fullReverse").textContent=$("#fullReverseBox").classList.contains("hidden")
+    ?"Ver reverso completo · spoilers":"Ocultar reverso completo";
+};
+
+
+// ---------- IA ----------
+let iaActive=[];
+
+function fillIa(filter=""){
+  const f=filter.trim().toLocaleLowerCase("es");
+  const cards=DATA.ia.filter(c=>c.title.toLocaleLowerCase("es").includes(f));
+  $("#iaSelect").innerHTML=cards.map(c=>`<option value="${c.id}">${c.title}</option>`).join("");
+}
+
+function renderIa(){
+  const box=$("#iaActive");
+  box.innerHTML="";
+  if(!iaActive.length){
+    box.innerHTML='<div class="empty">No has añadido ninguna Carta de IA.</div>';
+    return;
+  }
+  iaActive.forEach((c,idx)=>{
+    const d=document.createElement("div");
+    d.className="card ia";
+    d.style.minHeight="0";
+    d.innerHTML='<div class="meta"><span class="tag">IA IMPERIAL</span><span class="tag range"></span></div><h2></h2><div class="body"></div><button class="btn" style="margin-top:14px">Quitar</button>';
+    d.querySelector("h2").textContent=c.title;
+    d.querySelector(".range").textContent=c.range?("Alcance "+c.range):"Alcance según carta";
+    d.querySelector(".body").textContent=c.body;
+    d.querySelector("button").onclick=()=>{iaActive.splice(idx,1);renderIa()};
+    box.appendChild(d);
+  });  saveState();
+}
+
+
+$("#iaSearch").oninput=e=>fillIa(e.target.value);
+$("#addIa").onclick=()=>{
+  const c=DATA.ia.find(x=>x.id===$("#iaSelect").value);
+  if(c&&!iaActive.some(x=>x.id===c.id)){iaActive.push(c);renderIa()}
+};
+$("#clearIa").onclick=()=>{iaActive=[];renderIa()};
+
+function validatePrivatePayload(payload){
+  if(!payload || payload.format!=="raiv-espanol-private-data" || payload.schema!==1 || !payload.data){
+    throw new Error("El archivo no tiene el formato RAIV esperado.");
+  }
+  const d=payload.data;
+  for(const key of ["events","plans","aids","missions","ia"]){
+    if(!Array.isArray(d[key])) throw new Error("Falta la sección "+key+".");
+  }
+  return d;
+}
+
+function storePrivateData(payload){
+  localStorage.setItem(DATA_KEY,JSON.stringify(payload));
+}
+
+function loadStoredPrivateData(){
+  const raw=localStorage.getItem(DATA_KEY);
+  if(!raw)return null;
+  return validatePrivatePayload(JSON.parse(raw));
+}
+
+function setDataUi(loaded,message="",error=false){
+  $("#dataMissing").classList.toggle("hidden",loaded);
+  $("#dataLoaded").classList.toggle("hidden",!loaded);
+  $("#dataMessage").classList.toggle("hidden",!message);
+
+  if(message){
+    $("#dataMessage").textContent=message;
+    $("#dataMessage").style.borderColor=error?"var(--red)":"var(--border)";
+  }
+
+  $(".tabs").classList.toggle("hidden",!loaded);
+
+  if(!loaded){
+    ["events","missions","ia"].forEach(t=>$("#"+t+"Tab").classList.add("hidden"));
+  }
+}
+
+function initializeWithData(data,restore=true){
+  DATA=data;
+  CARD_BY_ID=new Map(
+    [...DATA.events,...DATA.plans,...DATA.aids,...DATA.ia].map(c=>[c.id,c])
+  );
+  expansions=[...new Set(DATA.missions.map(m=>m.expansion))];
+
+  iaActive=[];
+  activeMission=null;
+  backEventsRevealed=false;
+
+  fillExp();
+  fillIa();
+  renderIa();
+  renderEvents();
+
+  suppressSave=true;
+  let restored=false;
+  if(restore)restored=restoreSavedState();
+  suppressSave=false;
+  if(!restored)saveState();
+
+  setDataUi(true,"Datos privados cargados. Permanecen sólo en este dispositivo.",false);
+}
+
+async function importPrivateFile(file){
+  if(!file)return;
+  try{
+    const text=await file.text();
+    const payload=JSON.parse(text);
+    const data=validatePrivatePayload(payload);
+    storePrivateData(payload);
+    initializeWithData(data,true);
+  }catch(err){
+    setDataUi(false,"No se pudo importar el archivo: "+err.message,true);
+  }
+}
+
+$("#privateDataFile").addEventListener("change",e=>importPrivateFile(e.target.files[0]));
+$("#replacePrivateDataFile").addEventListener("change",e=>importPrivateFile(e.target.files[0]));
+
+$("#forgetPrivateData").addEventListener("click",()=>{
+  if(!confirm("¿Borrar de este dispositivo los datos privados RAIV y la partida guardada?"))return;
+  localStorage.removeItem(DATA_KEY);
+  localStorage.removeItem(SAVE_KEY);
+  location.reload();
+});
+
+try{
+  const stored=loadStoredPrivateData();
+  if(stored){
+    initializeWithData(stored,true);
+  }else{
+    suppressSave=false;
+    setDataUi(false,"Importa una vez tu archivo privado para activar la aplicación.",false);
+    setSaveIndicator("Esperando datos privados",true);
+  }
+}catch(err){
+  suppressSave=false;
+  try{localStorage.removeItem(DATA_KEY)}catch(_){}
+  setDataUi(false,"Los datos guardados no se pudieron leer. Vuelve a importar el archivo privado.",true);
+  setSaveIndicator("Datos privados no disponibles",false);
+}
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+  });
+}
+</script>
+
+</body>
+</html>
