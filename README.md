@@ -1,15 +1,9 @@
-# RAIV Español - PWA pública
+# RAIV Español - PWA pública v8
 
-Este repositorio contiene únicamente la aplicación web.
+Los datos RAIV se importan localmente y no forman parte del repositorio.
 
-Los datos de cartas y misiones NO forman parte del repositorio. Se importan
-desde un archivo JSON privado que permanece en el dispositivo del usuario.
-
-## GitHub Pages
-1. Mantén `index.html`, `manifest.webmanifest`, `service-worker.js` e `icons/` en la raíz.
-2. Activa GitHub Pages desde Settings > Pages.
-3. Abre la URL resultante en Safari.
-4. Importa el archivo privado de datos una sola vez.
-5. En iPad: Compartir > Añadir a pantalla de inicio.
-
-Después de la primera carga, la PWA puede funcionar sin conexión.
+## Cambios de v8
+- Datos y mantenimiento plegados junto al estado de guardado.
+- Navegación principal fija durante el desplazamiento.
+- Salto automático a la carta robada y a la IA recién añadida.
+- Conserva los datos y la partida de v7.

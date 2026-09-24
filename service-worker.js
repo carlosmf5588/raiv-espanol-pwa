@@ -1,4 +1,4 @@
-const CACHE = "raiv-espanol-v7";
+const CACHE = "raiv-espanol-v8";
 const APP_SHELL = [
   "./",
   "./index.html",

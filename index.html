@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>RAIV Español — PWA v7</title>
+<title>RAIV Español — PWA v8</title>
 <style>
 :root{
   color-scheme:light dark;
@@ -54,14 +54,24 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
   background:var(--panel);white-space:nowrap
 }
 .save-dot{width:8px;height:8px;border-radius:999px;background:var(--green);display:inline-block}
-.data-panel{margin-bottom:14px;border:2px solid var(--gold)}
 .data-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .data-actions .btn{flex:1}
 .file-button{position:relative;overflow:hidden}
 .file-button input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .okline{font-size:13px;color:var(--muted);margin-top:8px}
-
 .save-dot.warn{background:var(--warn)}
+
+.maintenance{margin-top:8px;max-width:620px}
+.maintenance>summary{list-style:none;width:max-content;max-width:100%;cursor:pointer}
+.maintenance>summary::-webkit-details-marker{display:none}
+.maintenance .save-indicator{user-select:none}
+.maintenance .chev{font-size:10px;opacity:.7;transition:transform .18s ease}
+.maintenance[open] .chev{transform:rotate(180deg)}
+.maintenance-card{margin-top:8px;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:13px;max-width:620px}
+.maintenance-card h2{margin:2px 0 6px;font-size:15px}
+.maintenance-card .subsection{padding-top:10px;margin-top:10px;border-top:1px solid var(--border)}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:7px 0 10px;margin-bottom:14px}
+#eventCurrent,#iaActive,#missionWrap{scroll-margin-top:76px}
 
 .global-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 @media(max-width:900px){.global-grid{grid-template-columns:1fr}}
@@ -82,52 +92,33 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
 <div class="app">
 <header>
  <div>
-   <div class="kicker">PWA v7</div>
+   <div class="kicker">PWA v8</div>
    <h1>RAIV Español</h1>
    <div class="sub">Eventos · Misiones · IA Imperial</div>
-   <div id="saveIndicator" class="save-indicator" style="margin-top:8px">
-     <span id="saveDot" class="save-dot"></span>
-     <span id="saveText">Preparando guardado automático…</span>
-   </div>
+   <details id="maintenance" class="maintenance">
+     <summary><span id="saveIndicator" class="save-indicator"><span id="saveDot" class="save-dot"></span><span id="saveText">Preparando guardado automático…</span><span class="chev">▼</span></span></summary>
+     <div class="maintenance-card">
+       <div class="kicker">Datos y mantenimiento</div>
+       <h2>Contenido RAIV local</h2>
+       <div id="dataMissing">
+         <div>Esta versión pública no contiene textos de cartas ni misiones. Selecciona tu archivo privado <strong>raiv_datos_privados_v7.json</strong>. El contenido se guardará únicamente en este navegador/dispositivo.</div>
+         <div class="data-actions"><label class="btn primary file-button" style="display:flex;align-items:center;justify-content:center;margin:0">Importar datos privados<input id="privateDataFile" type="file" accept=".json,application/json"></label></div>
+       </div>
+       <div id="dataLoaded" class="hidden">
+         <div class="okline"><strong>Datos privados cargados.</strong> Se conservan localmente en este dispositivo.</div>
+         <div class="data-actions"><label class="btn file-button" style="display:flex;align-items:center;justify-content:center;margin:0">Sustituir datos privados<input id="replacePrivateDataFile" type="file" accept=".json,application/json"></label><button id="forgetPrivateData" class="btn danger">Borrar datos locales</button></div>
+       </div>
+       <div id="dataMessage" class="status hidden"></div>
+       <div class="subsection"><div class="sectiontitle">Instalación y uso sin conexión</div><div class="note">Abre la dirección de la PWA en el navegador y usa “Añadir a pantalla de inicio”. Tras una primera apertura con Internet, la aplicación puede seguir funcionando sin conexión.</div></div>
+     </div>
+   </details>
  </div>
- <div class="tabs">
+</header>
+<nav class="tabs" aria-label="Secciones principales">
   <button class="tab active" data-tab="events">Eventos</button>
   <button class="tab" data-tab="missions">Misión</button>
   <button class="tab" data-tab="ia">IA</button>
- </div>
-</header>
-
-<section id="dataPanel" class="panel data-panel">
-  <div class="kicker">Datos privados</div>
-  <h2 class="sectiontitle" style="margin-top:4px">Contenido RAIV local</h2>
-
-  <div id="dataMissing">
-    <div>
-      Esta versión pública no contiene textos de cartas ni misiones.
-      Selecciona tu archivo privado <strong>raiv_datos_privados_v7.json</strong>.
-      El contenido se guardará únicamente en este navegador/dispositivo.
-    </div>
-    <div class="data-actions">
-      <label class="btn primary file-button" style="display:flex;align-items:center;justify-content:center;margin:0">
-        Importar datos privados
-        <input id="privateDataFile" type="file" accept=".json,application/json">
-      </label>
-    </div>
-  </div>
-
-  <div id="dataLoaded" class="hidden">
-    <div class="okline"><strong>Datos privados cargados.</strong> No tendrás que volver a seleccionarlos mientras Safari conserve los datos de esta PWA.</div>
-    <div class="data-actions">
-      <label class="btn file-button" style="display:flex;align-items:center;justify-content:center;margin:0">
-        Sustituir datos privados
-        <input id="replacePrivateDataFile" type="file" accept=".json,application/json">
-      </label>
-      <button id="forgetPrivateData" class="btn danger">Borrar datos locales</button>
-    </div>
-  </div>
-
-  <div id="dataMessage" class="status hidden"></div>
-</section>
+</nav>
 
 <section id="eventsTab">
  <div class="grid two">
@@ -254,14 +245,7 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
  </div>
 </section>
 
-<div class="panel" style="margin-top:14px">
-  <div class="sectiontitle">Instalación en iPad</div>
-  <div class="note">
-    Abre esta PWA desde su dirección web en Safari. Después usa Compartir → Añadir a pantalla de inicio.
-    Una vez instalada, seguirá funcionando sin conexión después de haberse abierto al menos una vez con Internet.
-  </div>
-</div>
-<footer style="padding:16px 2px 4px" class="note">PWA v7 pública: el programa no incluye los datos privados RAIV. Los datos se importan y quedan almacenados localmente en el dispositivo.</footer>
+<footer style="padding:16px 2px 4px" class="note">PWA v8 · La aplicación pública no contiene los datos privados RAIV.</footer>
 </div>
 
 <script>
@@ -559,6 +543,7 @@ $("#draw").onclick=()=>{
     ES.current=ES.deck.shift();
     setEventStatus("Carta robada.");
     renderEvents();
+    requestAnimationFrame(()=>$("#eventCurrent").scrollIntoView({behavior:"smooth",block:"start"}));
   }
 };
 $("#shuffle").onclick=()=>{
@@ -757,7 +742,14 @@ function renderIa(){
 $("#iaSearch").oninput=e=>fillIa(e.target.value);
 $("#addIa").onclick=()=>{
   const c=DATA.ia.find(x=>x.id===$("#iaSelect").value);
-  if(c&&!iaActive.some(x=>x.id===c.id)){iaActive.push(c);renderIa()}
+  if(c&&!iaActive.some(x=>x.id===c.id)){
+    iaActive.push(c);
+    renderIa();
+    requestAnimationFrame(()=>{
+      const last=$("#iaActive").lastElementChild;
+      if(last) last.scrollIntoView({behavior:"smooth",block:"start"});
+    });
+  }
 };
 $("#clearIa").onclick=()=>{iaActive=[];renderIa()};
 
@@ -786,17 +778,16 @@ function setDataUi(loaded,message="",error=false){
   $("#dataMissing").classList.toggle("hidden",loaded);
   $("#dataLoaded").classList.toggle("hidden",!loaded);
   $("#dataMessage").classList.toggle("hidden",!message);
-
   if(message){
     $("#dataMessage").textContent=message;
     $("#dataMessage").style.borderColor=error?"var(--red)":"var(--border)";
   }
-
   $(".tabs").classList.toggle("hidden",!loaded);
-
   if(!loaded){
     ["events","missions","ia"].forEach(t=>$("#"+t+"Tab").classList.add("hidden"));
   }
+  const maintenance=$("#maintenance");
+  if(maintenance && (!loaded || error)) maintenance.open=true;
 }
 
 function initializeWithData(data,restore=true){
