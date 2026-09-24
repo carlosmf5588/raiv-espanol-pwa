@@ -1,7 +1,7 @@
 {
   "name": "RAIV Español",
   "short_name": "RAIV",
-  "description": "Asistente RAIV para Eventos, Misiones e IA, con datos privados locales.",
+  "description": "Asistente RAIV con campaña, Eventos, Misiones e IA y datos privados locales.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

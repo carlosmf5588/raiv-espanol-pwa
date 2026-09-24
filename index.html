@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>RAIV Español — PWA v8</title>
+<title>RAIV Español — PWA v9</title>
 <style>
 :root{
   color-scheme:light dark;
@@ -72,6 +72,35 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
 .maintenance-card .subsection{padding-top:10px;margin-top:10px;border-top:1px solid var(--border)}
 .tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:7px 0 10px;margin-bottom:14px}
 #eventCurrent,#iaActive,#missionWrap{scroll-margin-top:76px}
+.ia-library{
+  display:grid;gap:6px;max-height:300px;overflow:auto;
+  border:1px solid var(--border);border-radius:12px;padding:7px;
+  background:color-mix(in srgb,var(--panel) 92%,var(--bg))
+}
+.ia-choice{
+  width:100%;text-align:left;border:1px solid transparent;border-radius:9px;
+  min-height:42px;padding:8px 10px;background:transparent;color:var(--text);
+  font-weight:700
+}
+.ia-choice:hover{border-color:var(--border)}
+.ia-choice.selected{
+  border-color:var(--gold);
+  background:color-mix(in srgb,var(--gold) 18%,var(--panel))
+}
+.campaign-hero{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media(max-width:760px){.campaign-hero{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.campaign-stat{border:1px solid var(--border);border-radius:12px;padding:10px}
+.campaign-stat b{display:block;font-size:18px}.campaign-stat span{font-size:11px;color:var(--muted)}
+.history{display:grid;gap:8px}
+.history-entry{border:1px solid var(--border);border-radius:12px;padding:11px}
+.history-entry h3{font-size:14px;margin:0 0 4px}
+.history-entry .note{white-space:pre-line}
+.finish-preview{
+  border:1px solid var(--border);border-radius:12px;padding:11px;margin-top:10px;
+  background:color-mix(in srgb,var(--blue) 7%,var(--panel))
+}
+.save-help{font-size:11px;color:var(--muted);margin-top:6px}
+
 
 .global-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 @media(max-width:900px){.global-grid{grid-template-columns:1fr}}
@@ -92,11 +121,12 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
 <div class="app">
 <header>
  <div>
-   <div class="kicker">PWA v8</div>
+   <div class="kicker">PWA v9</div>
    <h1>RAIV Español</h1>
    <div class="sub">Eventos · Misiones · IA Imperial</div>
    <details id="maintenance" class="maintenance">
      <summary><span id="saveIndicator" class="save-indicator"><span id="saveDot" class="save-dot"></span><span id="saveText">Preparando guardado automático…</span><span class="chev">▼</span></span></summary>
+     <div class="save-help">Toca aquí para abrir Datos y mantenimiento.</div>
      <div class="maintenance-card">
        <div class="kicker">Datos y mantenimiento</div>
        <h2>Contenido RAIV local</h2>
@@ -115,12 +145,73 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
  </div>
 </header>
 <nav class="tabs" aria-label="Secciones principales">
-  <button class="tab active" data-tab="events">Eventos</button>
+  <button class="tab active" data-tab="campaign">Campaña</button>
+  <button class="tab" data-tab="events">Eventos</button>
   <button class="tab" data-tab="missions">Misión</button>
   <button class="tab" data-tab="ia">IA</button>
 </nav>
 
-<section id="eventsTab">
+<section id="campaignTab">
+ <div class="grid two">
+  <aside class="panel">
+   <h2 class="sectiontitle">Nueva campaña</h2>
+   <label for="campaignName">Nombre · opcional</label>
+   <input id="campaignName" placeholder="Ej. Campaña Caja básica">
+   <label for="campaignDifficulty">Dificultad RAIV</label>
+   <select id="campaignDifficulty">
+    <option value="standard">Estándar · 25 al azar</option>
+    <option value="initiate">Iniciado · muy baja</option>
+    <option value="padawan">Padawan · baja</option>
+    <option value="knight">Caballero Jedi · media</option>
+    <option value="master">Maestro Jedi · alta</option>
+   </select>
+   <button id="startCampaign" class="btn primary" style="width:100%;margin-top:10px">Iniciar nueva campaña</button>
+   <div class="status">Crea el Mazo de Eventos inicial y empieza un historial nuevo. Si ya hay una campaña, se pedirá confirmación antes de sustituirla.</div>
+  </aside>
+
+  <main class="grid">
+   <div class="panel">
+    <div class="meta"><h2 class="sectiontitle">Campaña actual</h2><span id="campaignStateTag" class="tag">SIN INICIAR</span></div>
+    <div id="campaignEmpty" class="empty">Todavía no has iniciado una campaña.</div>
+    <div id="campaignCurrent" class="hidden">
+      <h2 id="campaignTitle" style="margin:4px 0 12px"></h2>
+      <div class="campaign-hero">
+        <div class="campaign-stat"><b id="campaignDifficultyLabel">—</b><span>DIFICULTAD</span></div>
+        <div class="campaign-stat"><b id="campaignMissionCount">0</b><span>MISIONES JUGADAS</span></div>
+        <div class="campaign-stat"><b id="campaignPlanCount">0</b><span>PLANES AÑADIDOS</span></div>
+        <div class="campaign-stat"><b id="campaignAidCount">0</b><span>AYUDAS AÑADIDAS</span></div>
+      </div>
+      <div class="status" id="campaignMissionStatus" style="margin-top:12px"></div>
+    </div>
+   </div>
+
+   <div id="finishMissionPanel" class="panel hidden">
+    <h2 class="sectiontitle">Finalizar misión</h2>
+    <div class="note">La app aplicará únicamente los cambios RAIV de campaña que ya podemos automatizar.</div>
+    <label for="missionResult">Resultado</label>
+    <select id="missionResult">
+      <option value="rebels">Victoria rebelde</option>
+      <option value="imperial">Derrota rebelde · victoria Imperial</option>
+    </select>
+    <label for="imperialReward">Recompensa Imperial obtenida</label>
+    <select id="imperialReward">
+      <option value="none">Ninguna / no corresponde</option>
+      <option value="deployment">Carta de Despliegue</option>
+      <option value="other">Recompensa que NO es de Despliegue</option>
+    </select>
+    <div id="finishPreview" class="finish-preview"></div>
+    <button id="finishMission" class="btn primary" style="width:100%;margin-top:10px">Confirmar fin de misión</button>
+   </div>
+
+   <div class="panel">
+    <h2 class="sectiontitle">Historial</h2>
+    <div id="campaignHistory" class="history"></div>
+   </div>
+  </main>
+ </div>
+</section>
+
+<section id="eventsTab" class="hidden">
  <div class="grid two">
   <aside class="panel">
    <h2 class="sectiontitle">Mazo de Eventos</h2>
@@ -140,13 +231,9 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
    </div>
    <div class="row"><button id="draw" class="btn primary" disabled>Robar</button><button id="shuffle" class="btn" disabled>Barajar</button></div>
    <hr class="sep">
-   <div class="note">Progreso de campaña</div>
+   <div class="note">Ajuste manual de campaña</div>
    <div class="row" style="margin-top:8px"><button id="addPlan" class="btn" disabled>+ Plan</button><button id="addAid" class="btn" disabled>+ Ayuda</button></div>
    <div id="eventStatus" class="status">Crea un mazo para empezar.</div>
-   <div class="status">
-     <strong>Guardado automático:</strong> el mazo, los descartes, la carta actual,
-     los Globales, la misión seleccionada y las IA activas se conservan en este navegador.
-   </div>
   </aside>
 
   <main class="grid">
@@ -234,8 +321,9 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
   <aside class="panel">
    <h2 class="sectiontitle">Biblioteca IA</h2>
    <label for="iaSearch">Buscar unidad</label><input id="iaSearch" placeholder="Ej. AT-ST, Oficial, Vader…">
-   <label for="iaSelect">Carta</label><select id="iaSelect" size="8" style="height:260px"></select>
-   <button id="addIa" class="btn primary" style="width:100%;margin-top:10px">Añadir a la misión</button>
+   <label>Carta</label>
+   <div id="iaLibrary" class="ia-library" role="listbox" aria-label="Cartas de IA"></div>
+   <button id="addIa" class="btn primary" style="width:100%;margin-top:10px" disabled>Añadir a la misión</button>
    <div class="status">Añade las Cartas de IA de los grupos de despliegue que estén en juego. Puedes mantener varias abiertas a la vez.</div>
   </aside>
   <main class="panel">
@@ -245,7 +333,7 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
  </div>
 </section>
 
-<footer style="padding:16px 2px 4px" class="note">PWA v8 · La aplicación pública no contiene los datos privados RAIV.</footer>
+<footer style="padding:16px 2px 4px" class="note">PWA v9 · La aplicación pública no contiene los datos privados RAIV.</footer>
 </div>
 
 <script>
@@ -261,6 +349,14 @@ function drawOne(pool){if(!pool.length)return null;return pool.splice(Math.floor
 const SAVE_KEY="raiv_espanol_v7_state";
 const DATA_KEY="raiv_espanol_v7_private_data";
 let suppressSave=true;
+
+const CS={
+  active:false,
+  name:"",
+  difficulty:"standard",
+  startedAt:null,
+  history:[]
+};
 
 function cardsToIds(arr){return (arr||[]).map(c=>c&&c.id).filter(Boolean)}
 function idsToCards(arr){return (arr||[]).map(id=>CARD_BY_ID.get(id)).filter(Boolean)}
@@ -300,6 +396,13 @@ function snapshotState(){
     },
     ia:{
       active:cardsToIds(iaActive)
+    },
+    campaign:{
+      active:!!CS.active,
+      name:CS.name||"",
+      difficulty:CS.difficulty||($("#difficulty")?$("#difficulty").value:"standard"),
+      startedAt:CS.startedAt||null,
+      history:Array.isArray(CS.history)?CS.history:[]
     }
   };
 }
@@ -310,7 +413,7 @@ function saveState(){
     const state=snapshotState();
     localStorage.setItem(SAVE_KEY,JSON.stringify(state));
     const t=new Date(state.savedAt).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
-    setSaveIndicator("Guardado automático · "+t,true);
+    setSaveIndicator("✓ Guardado automáticamente · "+t,true);
   }catch(err){
     setSaveIndicator("Guardado automático no disponible",false);
   }
@@ -365,15 +468,35 @@ function restoreSavedState(){
     renderIa();
     renderEvents();
 
-    if(s.activeTab){
-      $$(".tab").forEach(x=>x.classList.toggle("active",x.dataset.tab===s.activeTab));
-      ["events","missions","ia"].forEach(t=>{
-        $("#"+t+"Tab").classList.toggle("hidden",t!==s.activeTab);
-      });
+    const c=s.campaign||null;
+    if(c){
+      CS.active=!!c.active;
+      CS.name=c.name||"";
+      CS.difficulty=c.difficulty||s.difficulty||"standard";
+      CS.startedAt=c.startedAt||s.savedAt||Date.now();
+      CS.history=Array.isArray(c.history)?c.history:[];
+    }else{
+      // Migración transparente desde v7/v8: conserva la partida actual
+      // sin inventar un historial anterior.
+      CS.active=!!ES.built;
+      CS.name=ES.built?"Campaña existente":"";
+      CS.difficulty=s.difficulty||"standard";
+      CS.startedAt=s.savedAt||Date.now();
+      CS.history=[];
     }
+    if($("#campaignDifficulty"))$("#campaignDifficulty").value=CS.difficulty;
+    if($("#campaignName") && CS.name!=="Campaña existente")$("#campaignName").value=CS.name;
+    renderCampaign();
+
+    const allowedTabs=["campaign","events","missions","ia"];
+    const restoredTab=allowedTabs.includes(s.activeTab)?s.activeTab:"campaign";
+    $$(".tab").forEach(x=>x.classList.toggle("active",x.dataset.tab===restoredTab));
+    allowedTabs.forEach(t=>{
+      $("#"+t+"Tab").classList.toggle("hidden",t!==restoredTab);
+    });
 
     const when=s.savedAt?new Date(s.savedAt).toLocaleString():"";
-    setSaveIndicator(when?"Partida recuperada · "+when:"Partida recuperada",true);
+    setSaveIndicator(when?"✓ Partida recuperada · "+when:"✓ Partida recuperada",true);
     return true;
   }catch(err){
     setSaveIndicator("No se pudo recuperar el guardado",false);
@@ -381,12 +504,15 @@ function restoreSavedState(){
   }
 }
 
-$$(".tab").forEach(b=>b.addEventListener("click",()=>{
-  $$(".tab").forEach(x=>x.classList.remove("active"));
-  b.classList.add("active");
-  ["events","missions","ia"].forEach(t=>$("#"+t+"Tab").classList.toggle("hidden",t!==b.dataset.tab));
+function openTab(name){
+  const allowed=["campaign","events","missions","ia"];
+  if(!allowed.includes(name))name="campaign";
+  $$(".tab").forEach(x=>x.classList.toggle("active",x.dataset.tab===name));
+  allowed.forEach(t=>$("#"+t+"Tab").classList.toggle("hidden",t!==name));
   saveState();
-}));
+}
+
+$$(".tab").forEach(b=>b.addEventListener("click",()=>openTab(b.dataset.tab)));
 
 // ---------- EVENTOS ----------
 const ES={
@@ -424,13 +550,14 @@ function insertRandom(card){
   ES.deck.splice(Math.floor(Math.random()*(ES.deck.length+1)),0,card);
 }
 
-function addSpecial(kind){
+function addSpecial(kind,quiet=false){
   const pool=kind==="plan"?ES.planPool:ES.aidPool;
   const c=drawOne(pool);
-  if(!c)return;
+  if(!c)return null;
   insertRandom(c);
-  setEventStatus((kind==="plan"?"Plan Secreto":"Ayuda Rebelde")+" añadido al Mazo de Eventos.");
+  if(!quiet)setEventStatus((kind==="plan"?"Plan Secreto":"Ayuda Rebelde")+" añadido al Mazo de Eventos.");
   renderEvents();
+  return c;
 }
 
 function resolveCurrent(){
@@ -537,7 +664,11 @@ function renderEvents(){
   saveState();
 }
 
-$("#buildDeck").onclick=build;
+$("#buildDeck").onclick=()=>{
+  const replacing=ES.built||CS.active;
+  if(replacing && !confirm("Esto creará un mazo nuevo y reiniciará el historial de campaña. ¿Continuar?"))return;
+  startNewCampaign("",$("#difficulty").value);
+};
 $("#draw").onclick=()=>{
   if(!ES.current&&ES.deck.length){
     ES.current=ES.deck.shift();
@@ -563,6 +694,192 @@ $("#discard").onclick=()=>{
 $("#addPlan").onclick=()=>addSpecial("plan");
 $("#addAid").onclick=()=>addSpecial("aid");
 $("#difficulty").onchange=()=>saveState();
+
+
+// ---------- CAMPAÑA ----------
+const DIFFICULTY_LABELS={
+  standard:"Estándar",
+  initiate:"Iniciado",
+  padawan:"Padawan",
+  knight:"Caballero Jedi",
+  master:"Maestro Jedi"
+};
+
+function campaignCounts(){
+  return (CS.history||[]).reduce((a,h)=>{
+    a.plan+=(h.planAdded||0);
+    a.aid+=(h.aidAdded||0);
+    return a;
+  },{plan:0,aid:0});
+}
+
+function selectedMissionLabel(){
+  if(!activeMission)return "No hay una misión seleccionada.";
+  return `Misión seleccionada: ${activeMission.title} · ${activeMission.source}`;
+}
+
+function renderCampaign(){
+  const active=!!CS.active;
+  $("#campaignEmpty").classList.toggle("hidden",active);
+  $("#campaignCurrent").classList.toggle("hidden",!active);
+  $("#finishMissionPanel").classList.toggle("hidden",!active);
+  $("#campaignStateTag").textContent=active?"ACTIVA":"SIN INICIAR";
+
+  if(!active){
+    $("#campaignHistory").innerHTML='<div class="empty">El historial aparecerá aquí al completar misiones.</div>';
+    return;
+  }
+
+  const counts=campaignCounts();
+  $("#campaignTitle").textContent=CS.name||"Campaña RAIV";
+  $("#campaignDifficultyLabel").textContent=DIFFICULTY_LABELS[CS.difficulty]||CS.difficulty;
+  $("#campaignMissionCount").textContent=(CS.history||[]).length;
+  $("#campaignPlanCount").textContent=counts.plan;
+  $("#campaignAidCount").textContent=counts.aid;
+  $("#campaignMissionStatus").textContent=selectedMissionLabel();
+
+  renderFinishPreview();
+  renderCampaignHistory();
+}
+
+function renderFinishPreview(){
+  if(!$("#finishPreview"))return;
+  if(!CS.active){
+    $("#finishPreview").textContent="";
+    return;
+  }
+
+  const result=$("#missionResult").value;
+  const reward=$("#imperialReward").value;
+  const changes=[];
+
+  if(result==="rebels")changes.push("+1 Plan Secreto por victoria rebelde");
+  else changes.push("+1 Ayuda Rebelde por derrota rebelde");
+
+  if(reward==="other")changes.push("+1 Plan Secreto adicional por recompensa Imperial que no es de Despliegue");
+  else if(reward==="deployment")changes.push("La recompensa de Despliegue se registra, pero la app no modifica todavía el Mazo de Despliegue");
+
+  const mission=activeMission?`${activeMission.title} · ${activeMission.source}`:"No hay misión seleccionada";
+  $("#finishPreview").textContent=`${mission}\n\n${changes.join("\n")}`;
+  $("#finishMission").disabled=!activeMission;
+}
+
+function renderCampaignHistory(){
+  const box=$("#campaignHistory");
+  box.innerHTML="";
+  const history=[...(CS.history||[])].reverse();
+
+  if(!history.length){
+    box.innerHTML='<div class="empty">Todavía no has completado ninguna misión en esta campaña.</div>';
+    return;
+  }
+
+  history.forEach(h=>{
+    const d=document.createElement("div");
+    d.className="history-entry";
+    const title=document.createElement("h3");
+    title.textContent=h.missionTitle||"Misión";
+    const details=document.createElement("div");
+    details.className="note";
+    const result=h.result==="rebels"?"Victoria rebelde":"Derrota rebelde · victoria Imperial";
+    const changes=[];
+    if(h.planAdded)changes.push(`Planes Secretos añadidos: ${h.planAdded}`);
+    if(h.aidAdded)changes.push(`Ayudas Rebeldes añadidas: ${h.aidAdded}`);
+    if(h.reward==="deployment")changes.push("Recompensa: Carta de Despliegue · gestión física");
+    if(h.reward==="other")changes.push("Recompensa: no de Despliegue");
+    if(h.poolWarnings?.length)changes.push(...h.poolWarnings);
+    details.textContent=[
+      h.source||"",
+      result,
+      ...changes,
+      h.finishedAt?new Date(h.finishedAt).toLocaleString():""
+    ].filter(Boolean).join("\n");
+    d.append(title,details);
+    box.appendChild(d);
+  });
+}
+
+function startNewCampaign(name,mode){
+  CS.active=true;
+  CS.name=(name||"").trim()||"Campaña RAIV";
+  CS.difficulty=mode||"standard";
+  CS.startedAt=Date.now();
+  CS.history=[];
+
+  $("#difficulty").value=CS.difficulty;
+  $("#campaignDifficulty").value=CS.difficulty;
+  $("#campaignName").value=CS.name==="Campaña RAIV"?"":CS.name;
+
+  iaActive=[];
+  renderIa();
+  build();
+  setEventStatus("Nueva campaña iniciada. Mazo de Eventos preparado.");
+  renderCampaign();
+  saveState();
+}
+
+$("#startCampaign").onclick=()=>{
+  const replacing=CS.active||ES.built;
+  if(replacing && !confirm("Se sustituirá la campaña actual, su historial y el Mazo de Eventos. ¿Continuar?"))return;
+  startNewCampaign($("#campaignName").value,$("#campaignDifficulty").value);
+};
+
+$("#missionResult").onchange=renderFinishPreview;
+$("#imperialReward").onchange=renderFinishPreview;
+
+function finishMissionCleanup(){
+  if(ES.current){ES.discard.push(ES.current);ES.current=null}
+  if(ES.globalStandard){ES.discard.push(ES.globalStandard);ES.globalStandard=null}
+  ES.discard.push(...ES.globalPlans,...ES.globalAids);
+  ES.globalPlans=[];
+  ES.globalAids=[];
+  backEventsRevealed=false;
+}
+
+$("#finishMission").onclick=()=>{
+  if(!CS.active||!activeMission)return;
+
+  const result=$("#missionResult").value;
+  const reward=$("#imperialReward").value;
+  const poolWarnings=[];
+  let planAdded=0,aidAdded=0;
+
+  // Mejora Imperial de RAIV.
+  if(result==="rebels"){
+    if(addSpecial("plan",true))planAdded++;
+    else poolWarnings.push("No quedaban Planes Secretos disponibles para añadir.");
+  }else{
+    if(addSpecial("aid",true))aidAdded++;
+    else poolWarnings.push("No quedaban Ayudas Rebeldes disponibles para añadir.");
+  }
+
+  // Recompensa Imperial no de Despliegue.
+  if(reward==="other"){
+    if(addSpecial("plan",true))planAdded++;
+    else poolWarnings.push("No quedaba un Plan Secreto adicional disponible para la recompensa.");
+  }
+
+  finishMissionCleanup();
+
+  CS.history.push({
+    missionId:activeMission.id,
+    missionTitle:activeMission.title,
+    source:activeMission.source,
+    result,
+    reward,
+    planAdded,
+    aidAdded,
+    poolWarnings,
+    finishedAt:Date.now()
+  });
+
+  setEventStatus(
+    `Misión finalizada. Cambios de campaña: ${planAdded} Plan(es) Secreto(s), ${aidAdded} Ayuda(s) Rebelde(s).`
+  );
+  renderEvents();
+  renderCampaign();
+  saveState();
+};
 
 // ---------- MISIONES ----------
 let expansions=[];
@@ -677,6 +994,7 @@ function showMission(){
   $("#missionTitle").textContent=activeMission.title;
   $("#missionBody").textContent=activeMission.front;
   renderMissionEvents();
+  if(typeof renderCampaign==="function")renderCampaign();
   saveState();
 }
 
@@ -711,11 +1029,39 @@ $("#fullReverse").onclick=()=>{
 
 // ---------- IA ----------
 let iaActive=[];
+let selectedIaId=null;
 
 function fillIa(filter=""){
   const f=filter.trim().toLocaleLowerCase("es");
   const cards=DATA.ia.filter(c=>c.title.toLocaleLowerCase("es").includes(f));
-  $("#iaSelect").innerHTML=cards.map(c=>`<option value="${c.id}">${c.title}</option>`).join("");
+  const box=$("#iaLibrary");
+  box.innerHTML="";
+
+  cards.forEach(c=>{
+    const b=document.createElement("button");
+    b.type="button";
+    b.className="ia-choice"+(c.id===selectedIaId?" selected":"");
+    b.setAttribute("role","option");
+    b.setAttribute("aria-selected",c.id===selectedIaId?"true":"false");
+    b.textContent=c.title;
+    b.onclick=()=>{
+      selectedIaId=c.id;
+      fillIa($("#iaSearch").value);
+      $("#addIa").disabled=false;
+    };
+    box.appendChild(b);
+  });
+
+  if(!cards.length){
+    box.innerHTML='<div class="empty">No se han encontrado cartas.</div>';
+  }
+
+  if(selectedIaId && !cards.some(c=>c.id===selectedIaId)){
+    selectedIaId=null;
+    $("#addIa").disabled=true;
+  }else{
+    $("#addIa").disabled=!selectedIaId;
+  }
 }
 
 function renderIa(){
@@ -723,6 +1069,7 @@ function renderIa(){
   box.innerHTML="";
   if(!iaActive.length){
     box.innerHTML='<div class="empty">No has añadido ninguna Carta de IA.</div>';
+    saveState();
     return;
   }
   iaActive.forEach((c,idx)=>{
@@ -735,19 +1082,19 @@ function renderIa(){
     d.querySelector(".body").textContent=c.body;
     d.querySelector("button").onclick=()=>{iaActive.splice(idx,1);renderIa()};
     box.appendChild(d);
-  });  saveState();
+  });
+  saveState();
 }
-
 
 $("#iaSearch").oninput=e=>fillIa(e.target.value);
 $("#addIa").onclick=()=>{
-  const c=DATA.ia.find(x=>x.id===$("#iaSelect").value);
+  const c=DATA.ia.find(x=>x.id===selectedIaId);
   if(c&&!iaActive.some(x=>x.id===c.id)){
     iaActive.push(c);
     renderIa();
     requestAnimationFrame(()=>{
       const last=$("#iaActive").lastElementChild;
-      if(last) last.scrollIntoView({behavior:"smooth",block:"start"});
+      if(last)last.scrollIntoView({behavior:"smooth",block:"start"});
     });
   }
 };
@@ -784,7 +1131,7 @@ function setDataUi(loaded,message="",error=false){
   }
   $(".tabs").classList.toggle("hidden",!loaded);
   if(!loaded){
-    ["events","missions","ia"].forEach(t=>$("#"+t+"Tab").classList.add("hidden"));
+    ["campaign","events","missions","ia"].forEach(t=>$("#"+t+"Tab").classList.add("hidden"));
   }
   const maintenance=$("#maintenance");
   if(maintenance && (!loaded || error)) maintenance.open=true;
@@ -805,12 +1152,16 @@ function initializeWithData(data,restore=true){
   fillIa();
   renderIa();
   renderEvents();
+  renderCampaign();
 
   suppressSave=true;
   let restored=false;
   if(restore)restored=restoreSavedState();
   suppressSave=false;
-  if(!restored)saveState();
+  if(!restored){
+    openTab("campaign");
+    saveState();
+  }
 
   setDataUi(true,"Datos privados cargados. Permanecen sólo en este dispositivo.",false);
 }
