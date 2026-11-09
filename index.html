@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>RAIV Español — PWA v9</title>
+<title>RAIV Español — PWA v10</title>
 <style>
 :root{
   color-scheme:light dark;
@@ -100,6 +100,21 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
   background:color-mix(in srgb,var(--blue) 7%,var(--panel))
 }
 .save-help{font-size:11px;color:var(--muted);margin-top:6px}
+.deployment-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media(max-width:760px){.deployment-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.dep-list{display:grid;gap:8px}
+.dep-item{border:1px solid var(--border);border-radius:12px;padding:10px}
+.dep-item .title{font-weight:850}.dep-item .small{font-size:12px;color:var(--muted);margin-top:2px}
+.dep-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.dep-actions .btn{min-height:38px;padding:6px 9px;font-size:13px}
+.dep-hidden{border:1px dashed var(--border);border-radius:14px;padding:18px;text-align:center}
+.pending-card{border:2px solid var(--orange);border-radius:16px;padding:14px;margin-top:10px}
+.reward-select-wrap{margin-top:8px}
+.setup-columns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+@media(max-width:760px){.setup-columns{grid-template-columns:1fr}}
+.setup-box{border:1px solid var(--border);border-radius:12px;padding:10px}
+.setup-box h3{font-size:13px;margin:0 0 8px}
+#deploymentTab{scroll-margin-top:76px}
+
 
 
 .global-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
@@ -121,9 +136,9 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
 <div class="app">
 <header>
  <div>
-   <div class="kicker">PWA v9</div>
+   <div class="kicker">PWA v10</div>
    <h1>RAIV Español</h1>
-   <div class="sub">Eventos · Misiones · IA Imperial</div>
+   <div class="sub">Eventos · Misiones · Despliegue · IA Imperial</div>
    <details id="maintenance" class="maintenance">
      <summary><span id="saveIndicator" class="save-indicator"><span id="saveDot" class="save-dot"></span><span id="saveText">Preparando guardado automático…</span><span class="chev">▼</span></span></summary>
      <div class="save-help">Toca aquí para abrir Datos y mantenimiento.</div>
@@ -131,7 +146,7 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
        <div class="kicker">Datos y mantenimiento</div>
        <h2>Contenido RAIV local</h2>
        <div id="dataMissing">
-         <div>Esta versión pública no contiene textos de cartas ni misiones. Selecciona tu archivo privado <strong>raiv_datos_privados_v7.json</strong>. El contenido se guardará únicamente en este navegador/dispositivo.</div>
+         <div>Esta versión pública no contiene textos de cartas ni misiones. Selecciona tu archivo privado <strong>raiv_datos_privados_v10.json</strong>. El contenido se guardará únicamente en este navegador/dispositivo.</div>
          <div class="data-actions"><label class="btn primary file-button" style="display:flex;align-items:center;justify-content:center;margin:0">Importar datos privados<input id="privateDataFile" type="file" accept=".json,application/json"></label></div>
        </div>
        <div id="dataLoaded" class="hidden">
@@ -148,6 +163,7 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
   <button class="tab active" data-tab="campaign">Campaña</button>
   <button class="tab" data-tab="events">Eventos</button>
   <button class="tab" data-tab="missions">Misión</button>
+  <button class="tab" data-tab="deployment">Despliegue</button>
   <button class="tab" data-tab="ia">IA</button>
 </nav>
 
@@ -180,6 +196,7 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
         <div class="campaign-stat"><b id="campaignMissionCount">0</b><span>MISIONES JUGADAS</span></div>
         <div class="campaign-stat"><b id="campaignPlanCount">0</b><span>PLANES AÑADIDOS</span></div>
         <div class="campaign-stat"><b id="campaignAidCount">0</b><span>AYUDAS AÑADIDAS</span></div>
+        <div class="campaign-stat"><b id="campaignDeploymentRewardCount">0</b><span>DESPLIEGUES GANADOS</span></div>
       </div>
       <div class="status" id="campaignMissionStatus" style="margin-top:12px"></div>
     </div>
@@ -199,6 +216,11 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
       <option value="deployment">Carta de Despliegue</option>
       <option value="other">Recompensa que NO es de Despliegue</option>
     </select>
+    <div id="rewardDeploymentWrap" class="reward-select-wrap hidden">
+      <label for="rewardDeploymentCard">Carta de Despliegue obtenida</label>
+      <select id="rewardDeploymentCard"></select>
+      <div class="note">Se desbloqueará esa copia física para las misiones posteriores, aunque normalmente estuviera apartada.</div>
+    </div>
     <div id="finishPreview" class="finish-preview"></div>
     <button id="finishMission" class="btn primary" style="width:100%;margin-top:10px">Confirmar fin de misión</button>
    </div>
@@ -316,6 +338,70 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
  </div>
 </section>
 
+
+<section id="deploymentTab" class="hidden">
+ <div class="grid two">
+  <aside class="panel">
+   <h2 class="sectiontitle">Preparar Despliegue</h2>
+   <div id="deploymentDataMissing" class="empty hidden">Este archivo privado no contiene el inventario de Despliegue. Importa <strong>raiv_datos_privados_v10.json</strong> desde Datos y mantenimiento.</div>
+   <div id="deploymentSetupControls">
+    <label for="deploymentThreat">Nivel de amenaza de la misión</label>
+    <select id="deploymentThreat"><option value="2">2 · coste ≤6</option><option value="3">3 · coste ≤8</option><option value="4">4 · coste ≤12</option><option value="5">5+ · todas las no únicas</option></select>
+    <label for="openGroups">Número de grupos abiertos</label>
+    <input id="openGroups" type="number" min="0" max="12" step="1" value="0">
+    <hr class="sep">
+    <label for="depSearch">Buscar carta física obligatoria</label>
+    <input id="depSearch" placeholder="Ej. Soldado de asalto, Vader…">
+    <label for="depCardSelect">Carta</label>
+    <select id="depCardSelect" size="7" style="height:230px"></select>
+    <div class="row" style="margin-top:8px"><button id="addInitial" class="btn">+ Inicial</button><button id="addReserve" class="btn">+ Reserva</button></div>
+    <div class="setup-columns">
+      <div class="setup-box"><h3>Grupos iniciales</h3><div id="initialSetupList" class="dep-list"></div></div>
+      <div class="setup-box"><h3>Grupos de reserva</h3><div id="reserveSetupList" class="dep-list"></div></div>
+    </div>
+    <button id="prepareDeployment" class="btn primary" style="width:100%;margin-top:12px">Barajar y crear Mano de Despliegue</button>
+    <button id="resetDeployment" class="btn danger" style="width:100%;margin-top:8px">Reiniciar preparación de esta misión</button>
+    <div id="deploymentStatus" class="status">Añade los grupos iniciales/reserva que indique el libro y después crea la Mano.</div>
+   </div>
+  </aside>
+
+  <main class="grid">
+   <div class="panel">
+    <div class="meta"><h2 class="sectiontitle">Estado de Despliegue</h2><span id="deploymentPreparedTag" class="tag">SIN PREPARAR</span></div>
+    <div class="deployment-stats">
+      <div class="stat"><b id="depDeckN">0</b><span>MAZO RESTANTE</span></div>
+      <div class="stat"><b id="depHandN">0</b><span>MANO OCULTA</span></div>
+      <div class="stat"><b id="depDeployedN">0</b><span>GRUPOS EN JUEGO</span></div>
+      <div class="stat"><b id="depReserveN">0</b><span>RESERVA</span></div>
+    </div>
+    <label for="threatAvailable">Amenaza disponible</label>
+    <input id="threatAvailable" type="number" min="0" step="1" value="0">
+    <div class="row" style="margin-top:8px"><button id="statusAdvice" class="btn">Prioridad de Estatus</button><button id="attemptDeployment" class="btn primary">Intentar despliegue</button></div>
+    <div id="statusAdviceText" class="status">La app no automatiza todavía los refuerzos figura a figura.</div>
+    <div id="pendingDeployment" class="pending-card hidden">
+      <div class="kicker">Carta revelada</div><h2 id="pendingName" style="margin:5px 0"></h2><div id="pendingMeta" class="note"></div>
+      <div class="row" style="margin-top:10px"><button id="confirmDeployment" class="btn primary">Desplegar</button><button id="massiveReplace" class="btn danger">Descomunal sin casilla → sustituir</button></div>
+    </div>
+   </div>
+
+   <div class="panel">
+    <h2 class="sectiontitle">Mano de Despliegue</h2>
+    <div id="deploymentHand" class="dep-hidden">0 cartas ocultas. No se muestran hasta que RAIV ordene robar una.</div>
+   </div>
+
+   <div class="panel">
+    <h2 class="sectiontitle">Grupos desplegados · izquierda → derecha</h2>
+    <div id="deployedGroups" class="dep-list"></div>
+   </div>
+
+   <div class="panel">
+    <h2 class="sectiontitle">Grupos de reserva</h2>
+    <div id="reserveGroups" class="dep-list"></div>
+   </div>
+  </main>
+ </div>
+</section>
+
 <section id="iaTab" class="hidden">
  <div class="grid two">
   <aside class="panel">
@@ -333,12 +419,13 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
  </div>
 </section>
 
-<footer style="padding:16px 2px 4px" class="note">PWA v9 · La aplicación pública no contiene los datos privados RAIV.</footer>
+<footer style="padding:16px 2px 4px" class="note">PWA v10 · La aplicación pública no contiene los datos privados RAIV ni el inventario de Despliegue.</footer>
 </div>
 
 <script>
 let DATA = null;
 let CARD_BY_ID = new Map();
+let DEP_BY_ID = new Map();
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 
@@ -355,7 +442,24 @@ const CS={
   name:"",
   difficulty:"standard",
   startedAt:null,
-  history:[]
+  history:[],
+  deploymentRewards:[]
+};
+
+const DS={
+  prepared:false,
+  threatLevel:2,
+  openGroups:0,
+  threatAvailable:0,
+  initialSetup:[],
+  reserveSetup:[],
+  deck:[],
+  hand:[],
+  deployed:[],
+  reserve:[],
+  removed:[],
+  pending:null,
+  autoIa:[]
 };
 
 function cardsToIds(arr){return (arr||[]).map(c=>c&&c.id).filter(Boolean)}
@@ -402,7 +506,17 @@ function snapshotState(){
       name:CS.name||"",
       difficulty:CS.difficulty||($("#difficulty")?$("#difficulty").value:"standard"),
       startedAt:CS.startedAt||null,
-      history:Array.isArray(CS.history)?CS.history:[]
+      history:Array.isArray(CS.history)?CS.history:[],
+      deploymentRewards:Array.isArray(CS.deploymentRewards)?CS.deploymentRewards:[]
+    },
+    deployment:{
+      prepared:!!DS.prepared,
+      threatLevel:Number(DS.threatLevel)||2,
+      openGroups:Number(DS.openGroups)||0,
+      threatAvailable:Number(DS.threatAvailable)||0,
+      initialSetup:[...DS.initialSetup],reserveSetup:[...DS.reserveSetup],
+      deck:[...DS.deck],hand:[...DS.hand],deployed:[...DS.deployed],reserve:[...DS.reserve],
+      removed:[...DS.removed],pending:DS.pending||null,autoIa:[...DS.autoIa]
     }
   };
 }
@@ -475,6 +589,7 @@ function restoreSavedState(){
       CS.difficulty=c.difficulty||s.difficulty||"standard";
       CS.startedAt=c.startedAt||s.savedAt||Date.now();
       CS.history=Array.isArray(c.history)?c.history:[];
+      CS.deploymentRewards=Array.isArray(c.deploymentRewards)?c.deploymentRewards.filter(id=>DEP_BY_ID.has(id)):[];
     }else{
       // Migración transparente desde v7/v8: conserva la partida actual
       // sin inventar un historial anterior.
@@ -483,12 +598,28 @@ function restoreSavedState(){
       CS.difficulty=s.difficulty||"standard";
       CS.startedAt=s.savedAt||Date.now();
       CS.history=[];
+      CS.deploymentRewards=[];
     }
     if($("#campaignDifficulty"))$("#campaignDifficulty").value=CS.difficulty;
     if($("#campaignName") && CS.name!=="Campaña existente")$("#campaignName").value=CS.name;
+
+    const dep=s.deployment||{};
+    const validDepIds=arr=>(Array.isArray(arr)?arr:[]).filter(id=>DEP_BY_ID.has(id));
+    DS.prepared=!!dep.prepared;
+    DS.threatLevel=Number(dep.threatLevel)||2;
+    DS.openGroups=Number(dep.openGroups)||0;
+    DS.threatAvailable=Number(dep.threatAvailable)||0;
+    DS.initialSetup=validDepIds(dep.initialSetup);DS.reserveSetup=validDepIds(dep.reserveSetup);
+    DS.deck=validDepIds(dep.deck);DS.hand=validDepIds(dep.hand);DS.deployed=validDepIds(dep.deployed);
+    DS.reserve=validDepIds(dep.reserve);DS.removed=validDepIds(dep.removed);
+    DS.pending=DEP_BY_ID.has(dep.pending)?dep.pending:null;
+    DS.autoIa=(Array.isArray(dep.autoIa)?dep.autoIa:[]).filter(id=>DATA.ia.some(c=>c.id===id));
+    renderDeployment();
+    syncDeploymentIa();
+    fillRewardDeploymentSelect();
     renderCampaign();
 
-    const allowedTabs=["campaign","events","missions","ia"];
+    const allowedTabs=["campaign","events","missions","deployment","ia"];
     const restoredTab=allowedTabs.includes(s.activeTab)?s.activeTab:"campaign";
     $$(".tab").forEach(x=>x.classList.toggle("active",x.dataset.tab===restoredTab));
     allowedTabs.forEach(t=>{
@@ -505,7 +636,7 @@ function restoreSavedState(){
 }
 
 function openTab(name){
-  const allowed=["campaign","events","missions","ia"];
+  const allowed=["campaign","events","missions","deployment","ia"];
   if(!allowed.includes(name))name="campaign";
   $$(".tab").forEach(x=>x.classList.toggle("active",x.dataset.tab===name));
   allowed.forEach(t=>$("#"+t+"Tab").classList.toggle("hidden",t!==name));
@@ -736,6 +867,7 @@ function renderCampaign(){
   $("#campaignMissionCount").textContent=(CS.history||[]).length;
   $("#campaignPlanCount").textContent=counts.plan;
   $("#campaignAidCount").textContent=counts.aid;
+  $("#campaignDeploymentRewardCount").textContent=(CS.deploymentRewards||[]).length;
   $("#campaignMissionStatus").textContent=selectedMissionLabel();
 
   renderFinishPreview();
@@ -756,12 +888,21 @@ function renderFinishPreview(){
   if(result==="rebels")changes.push("+1 Plan Secreto por victoria rebelde");
   else changes.push("+1 Ayuda Rebelde por derrota rebelde");
 
+  $("#rewardDeploymentWrap").classList.toggle("hidden",reward!=="deployment");
+  let rewardOk=true;
   if(reward==="other")changes.push("+1 Plan Secreto adicional por recompensa Imperial que no es de Despliegue");
-  else if(reward==="deployment")changes.push("La recompensa de Despliegue se registra, pero la app no modifica todavía el Mazo de Despliegue");
+  else if(reward==="deployment"){
+    const rid=$("#rewardDeploymentCard").value;
+    const rc=DEP_BY_ID.get(rid);
+    if(DATA.deploymentCards?.length){
+      if(rc)changes.push(`Desbloquear para la campaña: ${deploymentLabel(rc,false)}`);
+      else{changes.push("Selecciona qué Carta de Despliegue se obtuvo.");rewardOk=false;}
+    }else changes.push("Recompensa de Despliegue registrada (importa los datos v10 para gestionar la carta concreta).");
+  }
 
   const mission=activeMission?`${activeMission.title} · ${activeMission.source}`:"No hay misión seleccionada";
   $("#finishPreview").textContent=`${mission}\n\n${changes.join("\n")}`;
-  $("#finishMission").disabled=!activeMission;
+  $("#finishMission").disabled=!activeMission||!rewardOk;
 }
 
 function renderCampaignHistory(){
@@ -785,7 +926,7 @@ function renderCampaignHistory(){
     const changes=[];
     if(h.planAdded)changes.push(`Planes Secretos añadidos: ${h.planAdded}`);
     if(h.aidAdded)changes.push(`Ayudas Rebeldes añadidas: ${h.aidAdded}`);
-    if(h.reward==="deployment")changes.push("Recompensa: Carta de Despliegue · gestión física");
+    if(h.reward==="deployment")changes.push(h.deploymentRewardName?`Recompensa de Despliegue: ${h.deploymentRewardName}`:"Recompensa: Carta de Despliegue");
     if(h.reward==="other")changes.push("Recompensa: no de Despliegue");
     if(h.poolWarnings?.length)changes.push(...h.poolWarnings);
     details.textContent=[
@@ -805,6 +946,8 @@ function startNewCampaign(name,mode){
   CS.difficulty=mode||"standard";
   CS.startedAt=Date.now();
   CS.history=[];
+  CS.deploymentRewards=[];
+  resetDeploymentMission(false);
 
   $("#difficulty").value=CS.difficulty;
   $("#campaignDifficulty").value=CS.difficulty;
@@ -826,6 +969,7 @@ $("#startCampaign").onclick=()=>{
 
 $("#missionResult").onchange=renderFinishPreview;
 $("#imperialReward").onchange=renderFinishPreview;
+$("#rewardDeploymentCard").onchange=renderFinishPreview;
 
 function finishMissionCleanup(){
   if(ES.current){ES.discard.push(ES.current);ES.current=null}
@@ -841,6 +985,8 @@ $("#finishMission").onclick=()=>{
 
   const result=$("#missionResult").value;
   const reward=$("#imperialReward").value;
+  const rewardDeploymentId=reward==="deployment"?$("#rewardDeploymentCard").value:null;
+  const rewardDeploymentCard=rewardDeploymentId?DEP_BY_ID.get(rewardDeploymentId):null;
   const poolWarnings=[];
   let planAdded=0,aidAdded=0;
 
@@ -858,6 +1004,9 @@ $("#finishMission").onclick=()=>{
     if(addSpecial("plan",true))planAdded++;
     else poolWarnings.push("No quedaba un Plan Secreto adicional disponible para la recompensa.");
   }
+  if(reward==="deployment" && rewardDeploymentCard && !CS.deploymentRewards.includes(rewardDeploymentId)){
+    CS.deploymentRewards.push(rewardDeploymentId);
+  }
 
   finishMissionCleanup();
 
@@ -867,12 +1016,16 @@ $("#finishMission").onclick=()=>{
     source:activeMission.source,
     result,
     reward,
+    deploymentRewardId:rewardDeploymentCard?rewardDeploymentCard.id:null,
+    deploymentRewardName:rewardDeploymentCard?deploymentLabel(rewardDeploymentCard,false):null,
     planAdded,
     aidAdded,
     poolWarnings,
     finishedAt:Date.now()
   });
 
+  resetDeploymentMission(false);
+  fillRewardDeploymentSelect();
   setEventStatus(
     `Misión finalizada. Cambios de campaña: ${planAdded} Plan(es) Secreto(s), ${aidAdded} Ayuda(s) Rebelde(s).`
   );
@@ -880,6 +1033,177 @@ $("#finishMission").onclick=()=>{
   renderCampaign();
   saveState();
 };
+
+
+// ---------- DESPLIEGUE ----------
+function deploymentLabel(c,withCopy=true){
+  if(!c)return "";
+  const copy=withCopy&&c.copies>1?` · copia ${c.copy}/${c.copies}`:"";
+  return `${c.name} · ${c.variant} · coste ${c.cost}${copy}`;
+}
+function normalDeploymentEligible(c,threat){
+  if(!c||c.unique)return false;
+  const t=Number(threat)||2;
+  if(t>=5)return true;
+  const cap=t===2?6:t===3?8:12;
+  return c.cost<=cap;
+}
+function campaignDeploymentEligible(c,threat){
+  return normalDeploymentEligible(c,threat)||(CS.deploymentRewards||[]).includes(c.id);
+}
+function deploymentCard(id){return DEP_BY_ID.get(id)||null}
+function validDeploymentIds(arr){return (arr||[]).filter(id=>DEP_BY_ID.has(id))}
+function deploymentUsedSetupIds(){return new Set([...DS.initialSetup,...DS.reserveSetup])}
+
+function fillDeploymentPicker(){
+  const sel=$("#depCardSelect"); if(!sel)return;
+  const f=($("#depSearch")?.value||"").trim().toLocaleLowerCase("es");
+  const used=deploymentUsedSetupIds();
+  const cards=(DATA.deploymentCards||[]).filter(c=>!used.has(c.id)&&deploymentLabel(c).toLocaleLowerCase("es").includes(f));
+  sel.innerHTML=cards.map(c=>`<option value="${c.id}">${c.faction} · ${deploymentLabel(c)}</option>`).join("");
+}
+function compactSetupItem(id,kind,index){
+  const c=deploymentCard(id); if(!c)return null;
+  const d=document.createElement("div");d.className="dep-item";
+  d.innerHTML='<div class="title"></div><div class="small"></div><div class="dep-actions"><button class="btn">Quitar</button></div>';
+  d.querySelector('.title').textContent=c.name;
+  d.querySelector('.small').textContent=`${c.variant} · coste ${c.cost}${c.reinforce!=null?` · refuerzo ${c.reinforce}`:""}${c.unique?" · ÚNICA":""}`;
+  d.querySelector('button').disabled=DS.prepared;
+  d.querySelector('button').onclick=()=>{(kind==="initial"?DS.initialSetup:DS.reserveSetup).splice(index,1);fillDeploymentPicker();renderDeployment();saveState()};
+  return d;
+}
+function renderSetupLists(){
+  const a=$("#initialSetupList"),b=$("#reserveSetupList");if(!a||!b)return;a.innerHTML="";b.innerHTML="";
+  DS.initialSetup.forEach((id,i)=>{const el=compactSetupItem(id,"initial",i);if(el)a.appendChild(el)});
+  DS.reserveSetup.forEach((id,i)=>{const el=compactSetupItem(id,"reserve",i);if(el)b.appendChild(el)});
+  if(!DS.initialSetup.length)a.innerHTML='<div class="note">Ninguno seleccionado.</div>';
+  if(!DS.reserveSetup.length)b.innerHTML='<div class="note">Ninguno seleccionado.</div>';
+}
+function resetDeploymentMission(doSave=true){
+  // Retira sólo IA que fue añadida automáticamente por este módulo.
+  for(const iaId of DS.autoIa||[]){iaActive=iaActive.filter(c=>c.id!==iaId)}
+  DS.prepared=false;DS.threatLevel=2;DS.openGroups=0;DS.threatAvailable=0;
+  DS.initialSetup=[];DS.reserveSetup=[];DS.deck=[];DS.hand=[];DS.deployed=[];DS.reserve=[];DS.removed=[];DS.pending=null;DS.autoIa=[];
+  if($("#deploymentThreat"))$("#deploymentThreat").value="2";
+  if($("#openGroups"))$("#openGroups").value="0";
+  if($("#threatAvailable"))$("#threatAvailable").value="0";
+  renderIa();renderDeployment();if(doSave)saveState();
+}
+function syncDeploymentIa(){
+  if(!DATA?.ia)return;
+  const desired=new Set(DS.deployed.map(id=>deploymentCard(id)?.iaId).filter(Boolean));
+  // Añadir sólo las IA ausentes y recordar cuáles añadió automáticamente el módulo.
+  desired.forEach(iaId=>{
+    if(!iaActive.some(c=>c.id===iaId)){
+      const card=DATA.ia.find(c=>c.id===iaId);if(card){iaActive.push(card);if(!DS.autoIa.includes(iaId))DS.autoIa.push(iaId)}
+    }
+  });
+  // Retirar únicamente IA autoañadidas que ya no sean necesarias.
+  DS.autoIa=[...new Set(DS.autoIa)].filter(iaId=>{
+    if(desired.has(iaId))return true;
+    iaActive=iaActive.filter(c=>c.id!==iaId);return false;
+  });
+  renderIa();
+}
+function prepareDeploymentMission(){
+  if(!DATA.deploymentCards?.length){setDeploymentStatus("Importa los datos privados v10 para usar el Mazo de Despliegue.");return}
+  const threat=Number($("#deploymentThreat").value)||2;
+  const open=Math.max(0,Number($("#openGroups").value)||0);
+  const excluded=new Set([...DS.initialSetup,...DS.reserveSetup]);
+  const pool=DATA.deploymentCards.filter(c=>campaignDeploymentEligible(c,threat)&&!excluded.has(c.id));
+  const shuffled=shuffle(pool.map(c=>c.id));
+  DS.prepared=true;DS.threatLevel=threat;DS.openGroups=open;DS.threatAvailable=Math.max(0,Number($("#threatAvailable").value)||0);
+  DS.deployed=[...DS.initialSetup];DS.reserve=[...DS.reserveSetup];DS.removed=[];DS.pending=null;
+  DS.hand=shuffled.splice(0,Math.min(open,shuffled.length));DS.deck=shuffled;
+  if(open>DS.hand.length)setDeploymentStatus(`Sólo había ${DS.hand.length} cartas disponibles para ${open} grupos abiertos.`);
+  else setDeploymentStatus(`Preparación completada: ${DS.hand.length} cartas ocultas en la Mano de Despliegue.`);
+  syncDeploymentIa();renderDeployment();saveState();
+}
+function setDeploymentStatus(t){if($("#deploymentStatus"))$("#deploymentStatus").textContent=t}
+function renderDeploymentRewardSummary(){fillRewardDeploymentSelect()}
+function fillRewardDeploymentSelect(){
+  const sel=$("#rewardDeploymentCard");if(!sel)return;
+  const rewarded=new Set(CS.deploymentRewards||[]);
+  const cards=(DATA?.deploymentCards||[]).filter(c=>!rewarded.has(c.id));
+  sel.innerHTML='<option value="">Selecciona una carta…</option>'+cards.map(c=>`<option value="${c.id}">${c.faction} · ${deploymentLabel(c)}</option>`).join("");
+}
+function deploymentItem(id,zone,index){
+  const c=deploymentCard(id);if(!c)return null;
+  const d=document.createElement("div");d.className="dep-item";
+  const reinforce=c.reinforce!=null?` · refuerzo ${c.reinforce}`:"";
+  d.innerHTML='<div class="title"></div><div class="small"></div><div class="dep-actions"></div>';
+  d.querySelector('.title').textContent=c.name;
+  d.querySelector('.small').textContent=`${c.variant} · coste ${c.cost}${reinforce}${c.unique?" · ÚNICA":""}`;
+  const actions=d.querySelector('.dep-actions');
+  if(zone==="deployed"){
+    const left=document.createElement('button');left.className='btn';left.textContent='←';left.disabled=index===0;left.onclick=()=>{[DS.deployed[index-1],DS.deployed[index]]=[DS.deployed[index],DS.deployed[index-1]];renderDeployment();saveState()};
+    const right=document.createElement('button');right.className='btn';right.textContent='→';right.disabled=index===DS.deployed.length-1;right.onclick=()=>{[DS.deployed[index],DS.deployed[index+1]]=[DS.deployed[index+1],DS.deployed[index]];renderDeployment();saveState()};
+    const defeated=document.createElement('button');defeated.className='btn danger';defeated.textContent='Grupo derrotado';defeated.onclick=()=>{
+      const [gone]=DS.deployed.splice(index,1);
+      if(c.unique)DS.removed.push(gone);else DS.hand=shuffle([...DS.hand,gone]);
+      syncDeploymentIa();renderDeployment();setDeploymentStatus(c.unique?`${c.name} retirado de la misión.`:`${c.name} vuelve a la Mano y la Mano se baraja.`);saveState();
+    };
+    actions.append(left,right,defeated);
+  }else if(zone==="reserve"){
+    const deploy=document.createElement('button');deploy.className='btn primary';deploy.textContent='Desplegar reserva';deploy.onclick=()=>{const [rid]=DS.reserve.splice(index,1);DS.deployed.push(rid);syncDeploymentIa();renderDeployment();setDeploymentStatus(`${c.name} desplegado desde la reserva.`);saveState()};actions.append(deploy);
+  }
+  return d;
+}
+function renderPendingDeployment(){
+  const wrap=$("#pendingDeployment");if(!wrap)return;
+  const c=deploymentCard(DS.pending);
+  wrap.classList.toggle('hidden',!c);
+  if(!c)return;
+  $("#pendingName").textContent=c.name;
+  $("#pendingMeta").textContent=`${c.variant} · coste ${c.cost} · amenaza disponible ${DS.threatAvailable}`;
+  $("#confirmDeployment").textContent=`Desplegar · gastar ${c.cost}`;
+  $("#confirmDeployment").disabled=DS.threatAvailable<c.cost;
+}
+function renderDeployment(){
+  const has=!!DATA?.deploymentCards?.length;
+  if($("#deploymentDataMissing"))$("#deploymentDataMissing").classList.toggle('hidden',has);
+  if($("#deploymentSetupControls"))$("#deploymentSetupControls").classList.toggle('hidden',!has);
+  if(!has)return;
+  DS.initialSetup=validDeploymentIds(DS.initialSetup);DS.reserveSetup=validDeploymentIds(DS.reserveSetup);DS.deck=validDeploymentIds(DS.deck);DS.hand=validDeploymentIds(DS.hand);DS.deployed=validDeploymentIds(DS.deployed);DS.reserve=validDeploymentIds(DS.reserve);DS.removed=validDeploymentIds(DS.removed);
+  if($("#deploymentThreat"))$("#deploymentThreat").value=String(DS.threatLevel||2);
+  if($("#openGroups"))$("#openGroups").value=String(DS.openGroups||0);
+  if($("#threatAvailable"))$("#threatAvailable").value=String(DS.threatAvailable||0);
+  $("#deploymentPreparedTag").textContent=DS.prepared?'PREPARADA':'SIN PREPARAR';
+  $("#depDeckN").textContent=DS.deck.length;$("#depHandN").textContent=DS.hand.length+(DS.pending?1:0);$("#depDeployedN").textContent=DS.deployed.length;$("#depReserveN").textContent=DS.reserve.length;
+  $("#deploymentHand").textContent=`${DS.hand.length+(DS.pending?1:0)} carta${DS.hand.length+(DS.pending?1:0)===1?'':'s'} oculta${DS.hand.length+(DS.pending?1:0)===1?'':'s'}. No se muestran hasta que RAIV ordene robar una.`;
+  renderSetupLists();fillDeploymentPicker();renderPendingDeployment();
+  const dep=$("#deployedGroups"),res=$("#reserveGroups");dep.innerHTML='';res.innerHTML='';
+  DS.deployed.forEach((id,i)=>{const el=deploymentItem(id,'deployed',i);if(el)dep.appendChild(el)});
+  DS.reserve.forEach((id,i)=>{const el=deploymentItem(id,'reserve',i);if(el)res.appendChild(el)});
+  if(!DS.deployed.length)dep.innerHTML='<div class="empty">No hay grupos desplegados registrados.</div>';
+  if(!DS.reserve.length)res.innerHTML='<div class="empty">No quedan grupos en reserva.</div>';
+  $("#attemptDeployment").disabled=!DS.prepared||!!DS.pending||!DS.hand.length;
+  $("#prepareDeployment").disabled=DS.prepared;
+  ["deploymentThreat","openGroups","depSearch","depCardSelect","addInitial","addReserve"].forEach(id=>{const el=$("#"+id);if(el)el.disabled=DS.prepared});
+}
+function attemptStatusDeployment(){
+  if(!DS.prepared||DS.pending||!DS.hand.length)return;
+  const id=DS.hand.shift(),c=deploymentCard(id);if(!c)return;
+  if(DS.threatAvailable<c.cost){DS.hand.push(id);setDeploymentStatus(`${c.name} cuesta ${c.cost} y sólo hay ${DS.threatAvailable} de amenaza. La carta va al fondo; no se roba otra.`);renderDeployment();saveState();return}
+  DS.pending=id;setDeploymentStatus(`${c.name} puede desplegarse. Confirma después de colocarlo en el tablero.`);renderDeployment();saveState();
+}
+
+$("#depSearch").oninput=fillDeploymentPicker;
+$("#deploymentThreat").onchange=e=>{DS.threatLevel=Number(e.target.value)||2;renderDeployment();saveState()};
+$("#openGroups").onchange=e=>{DS.openGroups=Math.max(0,Number(e.target.value)||0);saveState()};
+$("#threatAvailable").onchange=e=>{DS.threatAvailable=Math.max(0,Number(e.target.value)||0);renderPendingDeployment();saveState()};
+$("#addInitial").onclick=()=>{const id=$("#depCardSelect").value;if(id&&!deploymentUsedSetupIds().has(id)){DS.initialSetup.push(id);fillDeploymentPicker();renderDeployment();saveState()}};
+$("#addReserve").onclick=()=>{const id=$("#depCardSelect").value;if(id&&!deploymentUsedSetupIds().has(id)){DS.reserveSetup.push(id);fillDeploymentPicker();renderDeployment();saveState()}};
+$("#prepareDeployment").onclick=prepareDeploymentMission;
+$("#resetDeployment").onclick=()=>{if(!DS.prepared||confirm('¿Reiniciar toda la preparación de Despliegue de esta misión?'))resetDeploymentMission(true)};
+$("#statusAdvice").onclick=()=>{
+  if(!DS.prepared){$("#statusAdviceText").textContent='Prepara primero el Mazo y la Mano de Despliegue.';return}
+  if(DS.deployed.length>=4||DS.hand.length===0){$("#statusAdviceText").textContent='RAIV intenta reforzar el primer grupo desde la izquierda que pueda aceptar refuerzos. Si todos están llenos, intenta desplegar. El refuerzo se resuelve manualmente en v10.'}
+  else{$("#statusAdviceText").textContent='Hay menos de 4 grupos: RAIV intenta desplegar un nuevo grupo desde la Mano. Usa “Intentar despliegue”.'}
+};
+$("#attemptDeployment").onclick=attemptStatusDeployment;
+$("#confirmDeployment").onclick=()=>{const c=deploymentCard(DS.pending);if(!c||DS.threatAvailable<c.cost)return;DS.threatAvailable-=c.cost;DS.deployed.push(c.id);DS.pending=null;syncDeploymentIa();renderDeployment();setDeploymentStatus(`${c.name} desplegado. Amenaza restante: ${DS.threatAvailable}.`);saveState()};
+$("#massiveReplace").onclick=()=>{const c=deploymentCard(DS.pending);if(!c)return;if(!confirm("Usa esta opción sólo si la figura es Descomunal y no existe una casilla exterior válida. ¿Sustituir esta carta?"))return;DS.removed.push(c.id);DS.pending=null;if(DS.deck.length)DS.hand.push(DS.deck.shift());renderDeployment();setDeploymentStatus(`${c.name} se retira de la Mano y se sustituye por otra carta del Mazo, que permanece oculta.`);saveState()};
 
 // ---------- MISIONES ----------
 let expansions=[];
@@ -1131,7 +1455,7 @@ function setDataUi(loaded,message="",error=false){
   }
   $(".tabs").classList.toggle("hidden",!loaded);
   if(!loaded){
-    ["campaign","events","missions","ia"].forEach(t=>$("#"+t+"Tab").classList.add("hidden"));
+    ["campaign","events","missions","deployment","ia"].forEach(t=>$("#"+t+"Tab").classList.add("hidden"));
   }
   const maintenance=$("#maintenance");
   if(maintenance && (!loaded || error)) maintenance.open=true;
@@ -1142,6 +1466,7 @@ function initializeWithData(data,restore=true){
   CARD_BY_ID=new Map(
     [...DATA.events,...DATA.plans,...DATA.aids,...DATA.ia].map(c=>[c.id,c])
   );
+  DEP_BY_ID=new Map((DATA.deploymentCards||[]).map(c=>[c.id,c]));
   expansions=[...new Set(DATA.missions.map(m=>m.expansion))];
 
   iaActive=[];
@@ -1152,6 +1477,8 @@ function initializeWithData(data,restore=true){
   fillIa();
   renderIa();
   renderEvents();
+  fillRewardDeploymentSelect();
+  renderDeployment();
   renderCampaign();
 
   suppressSave=true;
@@ -1163,7 +1490,8 @@ function initializeWithData(data,restore=true){
     saveState();
   }
 
-  setDataUi(true,"Datos privados cargados. Permanecen sólo en este dispositivo.",false);
+  const depOk=Array.isArray(DATA.deploymentCards)&&DATA.deploymentCards.length;
+  setDataUi(true,depOk?"Datos privados v10 cargados. Permanecen sólo en este dispositivo.":"Datos privados cargados, pero falta el inventario de Despliegue. Sustituye el archivo por raiv_datos_privados_v10.json.",!depOk);
 }
 
 async function importPrivateFile(file){
