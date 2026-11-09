@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>RAIV Español — PWA v10</title>
+<title>RAIV Español — PWA v11</title>
 <style>
 :root{
   color-scheme:light dark;
@@ -115,7 +115,17 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
 .setup-box h3{font-size:13px;margin:0 0 8px}
 #deploymentTab{scroll-margin-top:76px}
 
-
+.num-stepper{display:grid;grid-template-columns:52px minmax(72px,1fr) 52px;gap:7px;align-items:center}
+.num-stepper input{text-align:center;font-weight:900;font-size:19px;background:color-mix(in srgb,var(--panel) 95%,var(--bg))}
+.num-stepper .btn{font-size:22px;padding:4px 10px}
+.elite-option,.elite-text{color:var(--red)!important;font-weight:900}
+.status.attention{border-color:var(--orange);background:color-mix(in srgb,var(--orange) 11%,var(--panel));color:var(--text);font-weight:750}
+.imperial-mission-card{border:1px solid var(--border);border-radius:14px;padding:13px}
+.imperial-mission-card.secondary{border-left:4px solid var(--blue)}
+.imperial-mission-card.mandatory{border-left:4px solid var(--red)}
+.imperial-mission-card h3{margin:3px 0 5px;font-size:17px}
+.imperial-mission-card .actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.imperial-mission-card .actions .btn{min-height:38px;font-size:13px;padding:6px 9px}
 
 .global-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 @media(max-width:900px){.global-grid{grid-template-columns:1fr}}
@@ -136,9 +146,9 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
 <div class="app">
 <header>
  <div>
-   <div class="kicker">PWA v10</div>
+   <div class="kicker">PWA v11</div>
    <h1>RAIV Español</h1>
-   <div class="sub">Eventos · Misiones · Despliegue · IA Imperial</div>
+   <div class="sub">Eventos · Misiones · Misiones Imperiales · Despliegue · IA Imperial</div>
    <details id="maintenance" class="maintenance">
      <summary><span id="saveIndicator" class="save-indicator"><span id="saveDot" class="save-dot"></span><span id="saveText">Preparando guardado automático…</span><span class="chev">▼</span></span></summary>
      <div class="save-help">Toca aquí para abrir Datos y mantenimiento.</div>
@@ -146,7 +156,7 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
        <div class="kicker">Datos y mantenimiento</div>
        <h2>Contenido RAIV local</h2>
        <div id="dataMissing">
-         <div>Esta versión pública no contiene textos de cartas ni misiones. Selecciona tu archivo privado <strong>raiv_datos_privados_v10.json</strong>. El contenido se guardará únicamente en este navegador/dispositivo.</div>
+         <div>Esta versión pública no contiene textos de cartas ni misiones. Selecciona tu archivo privado <strong>RAIV_datos_privados_v11.json</strong>. El contenido se guardará únicamente en este navegador/dispositivo.</div>
          <div class="data-actions"><label class="btn primary file-button" style="display:flex;align-items:center;justify-content:center;margin:0">Importar datos privados<input id="privateDataFile" type="file" accept=".json,application/json"></label></div>
        </div>
        <div id="dataLoaded" class="hidden">
@@ -163,6 +173,7 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
   <button class="tab active" data-tab="campaign">Campaña</button>
   <button class="tab" data-tab="events">Eventos</button>
   <button class="tab" data-tab="missions">Misión</button>
+  <button class="tab" data-tab="imperialMissions">Misiones imp.</button>
   <button class="tab" data-tab="deployment">Despliegue</button>
   <button class="tab" data-tab="ia">IA</button>
 </nav>
@@ -339,16 +350,50 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
 </section>
 
 
+<section id="imperialMissionsTab" class="hidden">
+ <div class="grid two">
+  <aside class="panel">
+   <h2 class="sectiontitle">Mazo de Misiones Imperiales</h2>
+   <div id="imperialMissionDataMissing" class="empty hidden">El archivo privado no contiene las 8 cartas de Misión Imperial. Importa <strong>RAIV_datos_privados_v11.json</strong>.</div>
+   <div id="imperialMissionControls">
+    <div class="stats">
+      <div class="stat"><b id="imperialMissionDeckN">0</b><span>MAZO</span></div>
+      <div class="stat"><b id="imperialMissionActiveN">0</b><span>EN JUEGO</span></div>
+      <div class="stat"><b id="imperialMissionResolvedN">0</b><span>RESUELTAS</span></div>
+    </div>
+    <div class="status">El mazo se crea y baraja al iniciar una campaña. <strong>Cambio de Prioridad</strong> roba sólo si no hay una misión Imperial en juego. <strong>Planes Saboteados</strong> ignora ese límite.</div>
+    <hr class="sep">
+    <div class="note">Controles manuales de respaldo</div>
+    <div class="row" style="margin-top:8px">
+      <button id="manualPriorityDraw" class="btn">Cambio de Prioridad</button>
+      <button id="manualSabotagedDraw" class="btn soft">Planes Saboteados</button>
+    </div>
+    <div id="imperialMissionStatus" class="status">Sin campaña preparada.</div>
+   </div>
+  </aside>
+  <main class="grid">
+    <div class="panel">
+      <h2 class="sectiontitle">Misiones Imperiales en juego</h2>
+      <div id="imperialMissionActive" class="list"></div>
+    </div>
+    <div class="panel">
+      <h2 class="sectiontitle">Misiones resueltas / retiradas</h2>
+      <div id="imperialMissionResolved" class="list"></div>
+    </div>
+  </main>
+ </div>
+</section>
+
 <section id="deploymentTab" class="hidden">
  <div class="grid two">
   <aside class="panel">
    <h2 class="sectiontitle">Preparar Despliegue</h2>
-   <div id="deploymentDataMissing" class="empty hidden">Este archivo privado no contiene el inventario de Despliegue. Importa <strong>raiv_datos_privados_v10.json</strong> desde Datos y mantenimiento.</div>
+   <div id="deploymentDataMissing" class="empty hidden">Este archivo privado no contiene el inventario de Despliegue. Importa <strong>RAIV_datos_privados_v11.json</strong> desde Datos y mantenimiento.</div>
    <div id="deploymentSetupControls">
     <label for="deploymentThreat">Nivel de amenaza de la misión</label>
     <select id="deploymentThreat"><option value="2">2 · coste ≤6</option><option value="3">3 · coste ≤8</option><option value="4">4 · coste ≤12</option><option value="5">5+ · todas las no únicas</option></select>
     <label for="openGroups">Número de grupos abiertos</label>
-    <input id="openGroups" type="number" min="0" max="12" step="1" value="0">
+    <div class="num-stepper"><button id="openGroupsMinus" class="btn" type="button">−</button><input id="openGroups" type="number" min="0" max="12" step="1" value="0" readonly inputmode="none"><button id="openGroupsPlus" class="btn" type="button">+</button></div>
     <hr class="sep">
     <label for="depSearch">Buscar carta física obligatoria</label>
     <input id="depSearch" placeholder="Ej. Soldado de asalto, Vader…">
@@ -375,9 +420,10 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
       <div class="stat"><b id="depReserveN">0</b><span>RESERVA</span></div>
     </div>
     <label for="threatAvailable">Amenaza disponible</label>
-    <input id="threatAvailable" type="number" min="0" step="1" value="0">
-    <div class="row" style="margin-top:8px"><button id="statusAdvice" class="btn">Prioridad de Estatus</button><button id="attemptDeployment" class="btn primary">Intentar despliegue</button></div>
+    <div class="num-stepper"><button id="threatMinus" class="btn" type="button">−</button><input id="threatAvailable" type="number" min="0" step="1" value="0" readonly inputmode="none"><button id="threatPlus" class="btn" type="button">+</button></div>
+    <div class="row" style="margin-top:8px"><button id="statusAdvice" class="btn">¿Qué toca en Estatus?</button><button id="attemptDeployment" class="btn primary">Intentar despliegue</button></div>
     <div id="statusAdviceText" class="status">La app no automatiza todavía los refuerzos figura a figura.</div>
+    <div id="deploymentActionText" class="status">Aquí aparecerá el resultado del intento de despliegue.</div>
     <div id="pendingDeployment" class="pending-card hidden">
       <div class="kicker">Carta revelada</div><h2 id="pendingName" style="margin:5px 0"></h2><div id="pendingMeta" class="note"></div>
       <div class="row" style="margin-top:10px"><button id="confirmDeployment" class="btn primary">Desplegar</button><button id="massiveReplace" class="btn danger">Descomunal sin casilla → sustituir</button></div>
@@ -419,13 +465,14 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
  </div>
 </section>
 
-<footer style="padding:16px 2px 4px" class="note">PWA v10 · La aplicación pública no contiene los datos privados RAIV ni el inventario de Despliegue.</footer>
+<footer style="padding:16px 2px 4px" class="note">PWA v11 · La aplicación pública no contiene los datos privados RAIV, el inventario de Despliegue ni el mazo de Misiones Imperiales.</footer>
 </div>
 
 <script>
 let DATA = null;
 let CARD_BY_ID = new Map();
 let DEP_BY_ID = new Map();
+let IMP_MISSION_BY_ID = new Map();
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 
@@ -436,6 +483,7 @@ function drawOne(pool){if(!pool.length)return null;return pool.splice(Math.floor
 const SAVE_KEY="raiv_espanol_v7_state";
 const DATA_KEY="raiv_espanol_v7_private_data";
 let suppressSave=true;
+let migrationNeedsSave=false;
 
 const CS={
   active:false,
@@ -444,6 +492,13 @@ const CS={
   startedAt:null,
   history:[],
   deploymentRewards:[]
+};
+
+const IMS={
+  deck:[],
+  active:[],
+  resolved:[],
+  lastNotice:""
 };
 
 const DS={
@@ -508,6 +563,12 @@ function snapshotState(){
       startedAt:CS.startedAt||null,
       history:Array.isArray(CS.history)?CS.history:[],
       deploymentRewards:Array.isArray(CS.deploymentRewards)?CS.deploymentRewards:[]
+    },
+    imperialMissions:{
+      deck:[...IMS.deck],
+      active:[...IMS.active],
+      resolved:[...IMS.resolved],
+      lastNotice:IMS.lastNotice||""
     },
     deployment:{
       prepared:!!DS.prepared,
@@ -603,6 +664,22 @@ function restoreSavedState(){
     if($("#campaignDifficulty"))$("#campaignDifficulty").value=CS.difficulty;
     if($("#campaignName") && CS.name!=="Campaña existente")$("#campaignName").value=CS.name;
 
+    const im=s.imperialMissions||null;
+    const validImpIds=arr=>(Array.isArray(arr)?arr:[]).filter(id=>IMP_MISSION_BY_ID.has(id));
+    if(im){
+      IMS.deck=validImpIds(im.deck);
+      IMS.active=validImpIds(im.active);
+      IMS.resolved=validImpIds(im.resolved);
+      IMS.lastNotice=im.lastNotice||"";
+    }else if(CS.active && DATA.imperialMissions?.length){
+      initImperialMissionDeck();
+      IMS.lastNotice="Mazo de Misiones Imperiales creado al migrar la campaña a v11.";
+      migrationNeedsSave=true;
+    }else{
+      IMS.deck=[];IMS.active=[];IMS.resolved=[];IMS.lastNotice="";
+    }
+    renderImperialMissions();
+
     const dep=s.deployment||{};
     const validDepIds=arr=>(Array.isArray(arr)?arr:[]).filter(id=>DEP_BY_ID.has(id));
     DS.prepared=!!dep.prepared;
@@ -619,7 +696,7 @@ function restoreSavedState(){
     fillRewardDeploymentSelect();
     renderCampaign();
 
-    const allowedTabs=["campaign","events","missions","deployment","ia"];
+    const allowedTabs=["campaign","events","missions","imperialMissions","deployment","ia"];
     const restoredTab=allowedTabs.includes(s.activeTab)?s.activeTab:"campaign";
     $$(".tab").forEach(x=>x.classList.toggle("active",x.dataset.tab===restoredTab));
     allowedTabs.forEach(t=>{
@@ -636,7 +713,7 @@ function restoreSavedState(){
 }
 
 function openTab(name){
-  const allowed=["campaign","events","missions","deployment","ia"];
+  const allowed=["campaign","events","missions","imperialMissions","deployment","ia"];
   if(!allowed.includes(name))name="campaign";
   $$(".tab").forEach(x=>x.classList.toggle("active",x.dataset.tab===name));
   allowed.forEach(t=>$("#"+t+"Tab").classList.toggle("hidden",t!==name));
@@ -696,9 +773,16 @@ function resolveCurrent(){
   if(!c)return;
 
   if(c.type==="INSTANTÁNEO"){
+    let special="";
+    if(c.title==="CAMBIO DE PRIORIDAD"){
+      special=drawImperialMission(false);
+    }else if(c.title==="PLANES SABOTEADOS"){
+      special=drawImperialMission(true);
+    }
     ES.discard.push(c);ES.current=null;
-    setEventStatus("Efecto resuelto. La carta Instantánea pasa al descarte.");
+    setEventStatus(special||"Efecto resuelto. La carta Instantánea pasa al descarte.");
     renderEvents();
+    renderImperialMissions();
     return;
   }
 
@@ -897,7 +981,7 @@ function renderFinishPreview(){
     if(DATA.deploymentCards?.length){
       if(rc)changes.push(`Desbloquear para la campaña: ${deploymentLabel(rc,false)}`);
       else{changes.push("Selecciona qué Carta de Despliegue se obtuvo.");rewardOk=false;}
-    }else changes.push("Recompensa de Despliegue registrada (importa los datos v10 para gestionar la carta concreta).");
+    }else changes.push("Recompensa de Despliegue registrada (importa los datos v11 para gestionar la carta concreta).");
   }
 
   const mission=activeMission?`${activeMission.title} · ${activeMission.source}`:"No hay misión seleccionada";
@@ -947,6 +1031,7 @@ function startNewCampaign(name,mode){
   CS.startedAt=Date.now();
   CS.history=[];
   CS.deploymentRewards=[];
+  initImperialMissionDeck();
   resetDeploymentMission(false);
 
   $("#difficulty").value=CS.difficulty;
@@ -1010,6 +1095,17 @@ $("#finishMission").onclick=()=>{
 
   finishMissionCleanup();
 
+  const playedImperialMissionId=IMS.active.find(id=>{
+    const c=imperialMissionCard(id);
+    return c && normalizeMissionName(c.name)===normalizeMissionName(activeMission.title);
+  });
+  if(playedImperialMissionId){
+    IMS.active=IMS.active.filter(id=>id!==playedImperialMissionId);
+    if(!IMS.resolved.includes(playedImperialMissionId))IMS.resolved.push(playedImperialMissionId);
+    const ic=imperialMissionCard(playedImperialMissionId);
+    IMS.lastNotice=`${ic?.name||"Misión Imperial"} se ha cerrado automáticamente al finalizar la misión.`;
+  }
+
   CS.history.push({
     missionId:activeMission.id,
     missionTitle:activeMission.title,
@@ -1030,10 +1126,115 @@ $("#finishMission").onclick=()=>{
     `Misión finalizada. Cambios de campaña: ${planAdded} Plan(es) Secreto(s), ${aidAdded} Ayuda(s) Rebelde(s).`
   );
   renderEvents();
+  renderImperialMissions();
   renderCampaign();
   saveState();
 };
 
+
+
+// ---------- MISIONES SECUNDARIAS IMPERIALES ----------
+function initImperialMissionDeck(){
+  const ids=(DATA?.imperialMissions||[]).map(c=>c.id);
+  IMS.deck=shuffle(ids);IMS.active=[];IMS.resolved=[];IMS.lastNotice=ids.length?`Mazo creado y barajado con ${ids.length} cartas.`:"";
+}
+function imperialMissionCard(id){return IMP_MISSION_BY_ID.get(id)||null}
+function imperialMissionTypeLabel(c){return c?.type==="mandatory"?"MISIÓN OBLIGATORIA":"MISIÓN SECUNDARIA"}
+function setImperialMissionStatus(t){
+  IMS.lastNotice=t||"";
+  if($("#imperialMissionStatus"))$("#imperialMissionStatus").textContent=IMS.lastNotice||"Sin cambios recientes.";
+}
+function drawImperialMission(ignoreLimit=false){
+  if(!DATA?.imperialMissions?.length)return "No están cargados los datos privados de Misiones Imperiales v11.";
+  if(!CS.active)return "No hay una campaña activa.";
+  if(!ignoreLimit && IMS.active.length){
+    const msg="Cambio de Prioridad: ya hay una Misión Imperial en juego. No se roba ninguna carta del mazo.";
+    setImperialMissionStatus(msg);return msg;
+  }
+  if(!IMS.deck.length){
+    const msg="El Mazo de Misiones Imperiales está agotado.";
+    setImperialMissionStatus(msg);return msg;
+  }
+  const id=IMS.deck.shift();IMS.active.push(id);
+  const c=imperialMissionCard(id);
+  const msg=`${ignoreLimit?"Planes Saboteados":"Cambio de Prioridad"}: entra en juego ${c?.name||"una misión"} · ${imperialMissionTypeLabel(c)}.`;
+  setImperialMissionStatus(msg);renderImperialMissions();return msg;
+}
+function closeImperialMission(id,ignored=false){
+  const i=IMS.active.indexOf(id);if(i<0)return;
+  const c=imperialMissionCard(id);IMS.active.splice(i,1);IMS.resolved.push(id);
+  let msg=`${c?.name||"Misión"} pasa a resueltas/retiradas.`;
+  if(ignored && c?.type==="secondary"){
+    if(c.rewardType==="deployment" && c.rewardDeploymentId && DEP_BY_ID.has(c.rewardDeploymentId)){
+      if(!CS.deploymentRewards.includes(c.rewardDeploymentId))CS.deploymentRewards.push(c.rewardDeploymentId);
+      msg+=` La IA obtiene ${c.rewardName}; la carta de Despliegue queda desbloqueada para la campaña.`;
+    }else if(c.rewardType==="other"){
+      const added=addSpecial("plan",true);
+      msg+=added?` La recompensa ${c.rewardName} no es de Despliegue: RAIV añade 1 Plan Secreto al Mazo de Eventos.`:` La recompensa ${c.rewardName} no es de Despliegue, pero no quedaban Planes Secretos disponibles.`;
+    }
+  }
+  setImperialMissionStatus(msg);fillRewardDeploymentSelect();renderCampaign();renderEvents();renderImperialMissions();saveState();
+}
+function normalizeMissionName(x){return (x||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleUpperCase("es").trim()}
+function matchingMission(name){
+  const target=normalizeMissionName(name);
+  return (DATA?.missions||[]).find(x=>normalizeMissionName(x.title)===target)||null;
+}
+function openMatchingMission(name){
+  const m=matchingMission(name);
+  if(!m){setImperialMissionStatus(`"${name}" no está bien indexada en la biblioteca actual de Cartas de Misión. Usa la carta física/RAIV correspondiente.`);renderImperialMissions();return}
+  $("#expansion").value=m.expansion;fillMission(false);$("#mission").value=m.id;activeMission=m;showMission();openTab("missions");saveState();
+}
+function imperialMissionItem(id,resolved=false){
+  const c=imperialMissionCard(id);if(!c)return null;
+  const d=document.createElement("div");d.className=`imperial-mission-card ${c.type==="mandatory"?"mandatory":"secondary"}`;
+  const meta=document.createElement("div");meta.className="meta";
+  const type=document.createElement("span");type.className="tag";type.textContent=imperialMissionTypeLabel(c);
+  const src=document.createElement("span");src.className="tag";src.textContent=c.source||"";
+  meta.append(type,src);
+  const h=document.createElement("h3");h.textContent=c.name;
+  const note=document.createElement("div");note.className="note";
+  note.textContent=`Recompensa Imperial: ${c.rewardName||"—"}${c.type==="mandatory"?" · Se juega como misión obligatoria.":" · Si los Héroes resuelven otra misión secundaria, esta carta se descarta y la IA recibe su recompensa."}`;
+  d.append(meta,h,note);
+  if(!resolved){
+    const actions=document.createElement("div");actions.className="actions";
+    const open=document.createElement("button");open.className="btn";open.textContent="Abrir Carta de Misión";
+    const linked=matchingMission(c.name);open.disabled=!linked;open.title=linked?"Abrir en la pestaña Misión":"Esta misión no está bien indexada en la biblioteca actual";
+    open.onclick=()=>openMatchingMission(c.name);
+    const done=document.createElement("button");done.className="btn primary";done.textContent="Marcar resuelta / retirada";done.onclick=()=>closeImperialMission(id,false);
+    actions.append(open,done);
+    if(c.type==="secondary"){
+      const ignored=document.createElement("button");ignored.className="btn soft";ignored.textContent="Se jugó otra secundaria → recompensa IA";ignored.onclick=()=>{
+        if(confirm(`¿Confirmar que se resolvió otra misión secundaria y que la IA obtiene la recompensa de ${c.name}?`))closeImperialMission(id,true);
+      };
+      actions.append(ignored);
+    }
+    d.append(actions);
+  }
+  return d;
+}
+function renderImperialMissions(){
+  const has=!!DATA?.imperialMissions?.length;
+  if($("#imperialMissionDataMissing"))$("#imperialMissionDataMissing").classList.toggle("hidden",has);
+  if($("#imperialMissionControls"))$("#imperialMissionControls").classList.toggle("hidden",!has);
+  if(!has)return;
+  IMS.deck=IMS.deck.filter(id=>IMP_MISSION_BY_ID.has(id));
+  IMS.active=IMS.active.filter(id=>IMP_MISSION_BY_ID.has(id));
+  IMS.resolved=IMS.resolved.filter(id=>IMP_MISSION_BY_ID.has(id));
+  $("#imperialMissionDeckN").textContent=IMS.deck.length;
+  $("#imperialMissionActiveN").textContent=IMS.active.length;
+  $("#imperialMissionResolvedN").textContent=IMS.resolved.length;
+  const a=$("#imperialMissionActive"),r=$("#imperialMissionResolved");a.innerHTML="";r.innerHTML="";
+  IMS.active.forEach(id=>{const el=imperialMissionItem(id,false);if(el)a.appendChild(el)});
+  [...IMS.resolved].reverse().forEach(id=>{const el=imperialMissionItem(id,true);if(el)r.appendChild(el)});
+  if(!IMS.active.length)a.innerHTML='<div class="empty">No hay ninguna Misión Imperial en juego.</div>';
+  if(!IMS.resolved.length)r.innerHTML='<div class="empty">Todavía no hay cartas resueltas o retiradas.</div>';
+  $("#manualPriorityDraw").disabled=!CS.active||!IMS.deck.length;
+  $("#manualSabotagedDraw").disabled=!CS.active||!IMS.deck.length;
+  setImperialMissionStatus(IMS.lastNotice||(CS.active?"Mazo preparado.":"Sin campaña preparada."));
+}
+$("#manualPriorityDraw").onclick=()=>{const msg=drawImperialMission(false);setEventStatus(msg);renderEvents();renderImperialMissions();saveState()};
+$("#manualSabotagedDraw").onclick=()=>{const msg=drawImperialMission(true);setEventStatus(msg);renderEvents();renderImperialMissions();saveState()};
 
 // ---------- DESPLIEGUE ----------
 function deploymentLabel(c,withCopy=true){
@@ -1054,19 +1255,31 @@ function campaignDeploymentEligible(c,threat){
 function deploymentCard(id){return DEP_BY_ID.get(id)||null}
 function validDeploymentIds(arr){return (arr||[]).filter(id=>DEP_BY_ID.has(id))}
 function deploymentUsedSetupIds(){return new Set([...DS.initialSetup,...DS.reserveSetup])}
-
+function deploymentSort(a,b){
+  const factionRank=x=>x.faction==="Imperial"?0:x.faction==="Mercenaria"?1:2;
+  const variantRank=x=>x.variant==="Normal"?0:x.variant==="Élite"?1:x.variant==="Única"?2:3;
+  return factionRank(a)-factionRank(b)
+    || a.name.localeCompare(b.name,"es",{sensitivity:"base"})
+    || variantRank(a)-variantRank(b)
+    || (a.copy||1)-(b.copy||1);
+}
+function deploymentOption(c){
+  const cls=c.variant==="Élite"?' class="elite-option"':"";
+  return `<option${cls} value="${c.id}">${c.faction} · ${deploymentLabel(c)}</option>`;
+}
 function fillDeploymentPicker(){
   const sel=$("#depCardSelect"); if(!sel)return;
   const f=($("#depSearch")?.value||"").trim().toLocaleLowerCase("es");
   const used=deploymentUsedSetupIds();
-  const cards=(DATA.deploymentCards||[]).filter(c=>!used.has(c.id)&&deploymentLabel(c).toLocaleLowerCase("es").includes(f));
-  sel.innerHTML=cards.map(c=>`<option value="${c.id}">${c.faction} · ${deploymentLabel(c)}</option>`).join("");
+  const cards=(DATA.deploymentCards||[]).filter(c=>!used.has(c.id)&&deploymentLabel(c).toLocaleLowerCase("es").includes(f)).sort(deploymentSort);
+  sel.innerHTML=cards.map(deploymentOption).join("");
 }
 function compactSetupItem(id,kind,index){
   const c=deploymentCard(id); if(!c)return null;
   const d=document.createElement("div");d.className="dep-item";
   d.innerHTML='<div class="title"></div><div class="small"></div><div class="dep-actions"><button class="btn">Quitar</button></div>';
   d.querySelector('.title').textContent=c.name;
+  if(c.variant==="Élite")d.querySelector('.title').classList.add('elite-text');
   d.querySelector('.small').textContent=`${c.variant} · coste ${c.cost}${c.reinforce!=null?` · refuerzo ${c.reinforce}`:""}${c.unique?" · ÚNICA":""}`;
   d.querySelector('button').disabled=DS.prepared;
   d.querySelector('button').onclick=()=>{(kind==="initial"?DS.initialSetup:DS.reserveSetup).splice(index,1);fillDeploymentPicker();renderDeployment();saveState()};
@@ -1106,7 +1319,7 @@ function syncDeploymentIa(){
   renderIa();
 }
 function prepareDeploymentMission(){
-  if(!DATA.deploymentCards?.length){setDeploymentStatus("Importa los datos privados v10 para usar el Mazo de Despliegue.");return}
+  if(!DATA.deploymentCards?.length){setDeploymentStatus("Importa los datos privados v11 para usar el Mazo de Despliegue.");return}
   const threat=Number($("#deploymentThreat").value)||2;
   const open=Math.max(0,Number($("#openGroups").value)||0);
   const excluded=new Set([...DS.initialSetup,...DS.reserveSetup]);
@@ -1119,13 +1332,19 @@ function prepareDeploymentMission(){
   else setDeploymentStatus(`Preparación completada: ${DS.hand.length} cartas ocultas en la Mano de Despliegue.`);
   syncDeploymentIa();renderDeployment();saveState();
 }
-function setDeploymentStatus(t){if($("#deploymentStatus"))$("#deploymentStatus").textContent=t}
+function setDeploymentStatus(t,attention=false){
+  if($("#deploymentStatus"))$("#deploymentStatus").textContent=t;
+  if($("#deploymentActionText")){
+    $("#deploymentActionText").textContent=t;
+    $("#deploymentActionText").classList.toggle("attention",!!attention);
+  }
+}
 function renderDeploymentRewardSummary(){fillRewardDeploymentSelect()}
 function fillRewardDeploymentSelect(){
   const sel=$("#rewardDeploymentCard");if(!sel)return;
   const rewarded=new Set(CS.deploymentRewards||[]);
-  const cards=(DATA?.deploymentCards||[]).filter(c=>!rewarded.has(c.id));
-  sel.innerHTML='<option value="">Selecciona una carta…</option>'+cards.map(c=>`<option value="${c.id}">${c.faction} · ${deploymentLabel(c)}</option>`).join("");
+  const cards=(DATA?.deploymentCards||[]).filter(c=>!rewarded.has(c.id)).sort(deploymentSort);
+  sel.innerHTML='<option value="">Selecciona una carta…</option>'+cards.map(deploymentOption).join("");
 }
 function deploymentItem(id,zone,index){
   const c=deploymentCard(id);if(!c)return null;
@@ -1133,6 +1352,7 @@ function deploymentItem(id,zone,index){
   const reinforce=c.reinforce!=null?` · refuerzo ${c.reinforce}`:"";
   d.innerHTML='<div class="title"></div><div class="small"></div><div class="dep-actions"></div>';
   d.querySelector('.title').textContent=c.name;
+  if(c.variant==="Élite")d.querySelector('.title').classList.add('elite-text');
   d.querySelector('.small').textContent=`${c.variant} · coste ${c.cost}${reinforce}${c.unique?" · ÚNICA":""}`;
   const actions=d.querySelector('.dep-actions');
   if(zone==="deployed"){
@@ -1179,26 +1399,40 @@ function renderDeployment(){
   if(!DS.reserve.length)res.innerHTML='<div class="empty">No quedan grupos en reserva.</div>';
   $("#attemptDeployment").disabled=!DS.prepared||!!DS.pending||!DS.hand.length;
   $("#prepareDeployment").disabled=DS.prepared;
-  ["deploymentThreat","openGroups","depSearch","depCardSelect","addInitial","addReserve"].forEach(id=>{const el=$("#"+id);if(el)el.disabled=DS.prepared});
+  ["deploymentThreat","openGroups","openGroupsMinus","openGroupsPlus","depSearch","depCardSelect","addInitial","addReserve"].forEach(id=>{const el=$("#"+id);if(el)el.disabled=DS.prepared});
 }
 function attemptStatusDeployment(){
   if(!DS.prepared||DS.pending||!DS.hand.length)return;
   const id=DS.hand.shift(),c=deploymentCard(id);if(!c)return;
-  if(DS.threatAvailable<c.cost){DS.hand.push(id);setDeploymentStatus(`${c.name} cuesta ${c.cost} y sólo hay ${DS.threatAvailable} de amenaza. La carta va al fondo; no se roba otra.`);renderDeployment();saveState();return}
+  if(DS.threatAvailable<c.cost){DS.hand.push(id);setDeploymentStatus(`No se despliega: ${c.name} cuesta ${c.cost} y sólo hay ${DS.threatAvailable} de amenaza. La carta va al fondo de la Mano y no se roba otra.`,true);renderDeployment();saveState();return}
   DS.pending=id;setDeploymentStatus(`${c.name} puede desplegarse. Confirma después de colocarlo en el tablero.`);renderDeployment();saveState();
 }
 
 $("#depSearch").oninput=fillDeploymentPicker;
 $("#deploymentThreat").onchange=e=>{DS.threatLevel=Number(e.target.value)||2;renderDeployment();saveState()};
-$("#openGroups").onchange=e=>{DS.openGroups=Math.max(0,Number(e.target.value)||0);saveState()};
-$("#threatAvailable").onchange=e=>{DS.threatAvailable=Math.max(0,Number(e.target.value)||0);renderPendingDeployment();saveState()};
+function changeCounter(kind,delta){
+  if(kind==="open"){
+    if(DS.prepared)return;
+    DS.openGroups=Math.min(12,Math.max(0,(Number(DS.openGroups)||0)+delta));
+    $("#openGroups").value=String(DS.openGroups);
+  }else{
+    DS.threatAvailable=Math.max(0,(Number(DS.threatAvailable)||0)+delta);
+    $("#threatAvailable").value=String(DS.threatAvailable);
+    renderPendingDeployment();
+  }
+  saveState();
+}
+$("#openGroupsMinus").onclick=()=>changeCounter("open",-1);
+$("#openGroupsPlus").onclick=()=>changeCounter("open",1);
+$("#threatMinus").onclick=()=>changeCounter("threat",-1);
+$("#threatPlus").onclick=()=>changeCounter("threat",1);
 $("#addInitial").onclick=()=>{const id=$("#depCardSelect").value;if(id&&!deploymentUsedSetupIds().has(id)){DS.initialSetup.push(id);fillDeploymentPicker();renderDeployment();saveState()}};
 $("#addReserve").onclick=()=>{const id=$("#depCardSelect").value;if(id&&!deploymentUsedSetupIds().has(id)){DS.reserveSetup.push(id);fillDeploymentPicker();renderDeployment();saveState()}};
 $("#prepareDeployment").onclick=prepareDeploymentMission;
 $("#resetDeployment").onclick=()=>{if(!DS.prepared||confirm('¿Reiniciar toda la preparación de Despliegue de esta misión?'))resetDeploymentMission(true)};
 $("#statusAdvice").onclick=()=>{
   if(!DS.prepared){$("#statusAdviceText").textContent='Prepara primero el Mazo y la Mano de Despliegue.';return}
-  if(DS.deployed.length>=4||DS.hand.length===0){$("#statusAdviceText").textContent='RAIV intenta reforzar el primer grupo desde la izquierda que pueda aceptar refuerzos. Si todos están llenos, intenta desplegar. El refuerzo se resuelve manualmente en v10.'}
+  if(DS.deployed.length>=4||DS.hand.length===0){$("#statusAdviceText").textContent='RAIV intenta reforzar el primer grupo desde la izquierda que pueda aceptar refuerzos. Si todos están llenos, intenta desplegar. El refuerzo se resuelve manualmente en v11.'}
   else{$("#statusAdviceText").textContent='Hay menos de 4 grupos: RAIV intenta desplegar un nuevo grupo desde la Mano. Usa “Intentar despliegue”.'}
 };
 $("#attemptDeployment").onclick=attemptStatusDeployment;
@@ -1455,7 +1689,7 @@ function setDataUi(loaded,message="",error=false){
   }
   $(".tabs").classList.toggle("hidden",!loaded);
   if(!loaded){
-    ["campaign","events","missions","deployment","ia"].forEach(t=>$("#"+t+"Tab").classList.add("hidden"));
+    ["campaign","events","missions","imperialMissions","deployment","ia"].forEach(t=>$("#"+t+"Tab").classList.add("hidden"));
   }
   const maintenance=$("#maintenance");
   if(maintenance && (!loaded || error)) maintenance.open=true;
@@ -1467,6 +1701,7 @@ function initializeWithData(data,restore=true){
     [...DATA.events,...DATA.plans,...DATA.aids,...DATA.ia].map(c=>[c.id,c])
   );
   DEP_BY_ID=new Map((DATA.deploymentCards||[]).map(c=>[c.id,c]));
+  IMP_MISSION_BY_ID=new Map((DATA.imperialMissions||[]).map(c=>[c.id,c]));
   expansions=[...new Set(DATA.missions.map(m=>m.expansion))];
 
   iaActive=[];
@@ -1478,6 +1713,7 @@ function initializeWithData(data,restore=true){
   renderIa();
   renderEvents();
   fillRewardDeploymentSelect();
+  renderImperialMissions();
   renderDeployment();
   renderCampaign();
 
@@ -1488,10 +1724,15 @@ function initializeWithData(data,restore=true){
   if(!restored){
     openTab("campaign");
     saveState();
+  }else if(migrationNeedsSave){
+    migrationNeedsSave=false;
+    saveState();
   }
 
   const depOk=Array.isArray(DATA.deploymentCards)&&DATA.deploymentCards.length;
-  setDataUi(true,depOk?"Datos privados v10 cargados. Permanecen sólo en este dispositivo.":"Datos privados cargados, pero falta el inventario de Despliegue. Sustituye el archivo por raiv_datos_privados_v10.json.",!depOk);
+  const imOk=Array.isArray(DATA.imperialMissions)&&DATA.imperialMissions.length===8;
+  const allOk=depOk&&imOk;
+  setDataUi(true,allOk?"Datos privados v11 cargados. Permanecen sólo en este dispositivo.":"Datos privados cargados, pero falta contenido de v11. Sustituye el archivo por RAIV_datos_privados_v11.json.",!allOk);
 }
 
 async function importPrivateFile(file){
