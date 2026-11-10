@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>RAIV Español — PWA v11</title>
+<title>RAIV Español — PWA v12</title>
 <style>
 :root{
   color-scheme:light dark;
@@ -146,7 +146,7 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
 <div class="app">
 <header>
  <div>
-   <div class="kicker">PWA v11</div>
+   <div class="kicker">PWA v12</div>
    <h1>RAIV Español</h1>
    <div class="sub">Eventos · Misiones · Misiones Imperiales · Despliegue · IA Imperial</div>
    <details id="maintenance" class="maintenance">
@@ -156,7 +156,7 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
        <div class="kicker">Datos y mantenimiento</div>
        <h2>Contenido RAIV local</h2>
        <div id="dataMissing">
-         <div>Esta versión pública no contiene textos de cartas ni misiones. Selecciona tu archivo privado <strong>RAIV_datos_privados_v11.json</strong>. El contenido se guardará únicamente en este navegador/dispositivo.</div>
+         <div>Esta versión pública no contiene textos de cartas ni misiones. Selecciona tu archivo privado <strong>RAIV_datos_privados_v12.json</strong>. El contenido se guardará únicamente en este navegador/dispositivo.</div>
          <div class="data-actions"><label class="btn primary file-button" style="display:flex;align-items:center;justify-content:center;margin:0">Importar datos privados<input id="privateDataFile" type="file" accept=".json,application/json"></label></div>
        </div>
        <div id="dataLoaded" class="hidden">
@@ -173,7 +173,7 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
   <button class="tab active" data-tab="campaign">Campaña</button>
   <button class="tab" data-tab="events">Eventos</button>
   <button class="tab" data-tab="missions">Misión</button>
-  <button class="tab" data-tab="imperialMissions">Misiones imp.</button>
+  <button class="tab" data-tab="imperialMissions">Misiones Imperiales</button>
   <button class="tab" data-tab="deployment">Despliegue</button>
   <button class="tab" data-tab="ia">IA</button>
 </nav>
@@ -354,7 +354,7 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
  <div class="grid two">
   <aside class="panel">
    <h2 class="sectiontitle">Mazo de Misiones Imperiales</h2>
-   <div id="imperialMissionDataMissing" class="empty hidden">El archivo privado no contiene las 8 cartas de Misión Imperial. Importa <strong>RAIV_datos_privados_v11.json</strong>.</div>
+   <div id="imperialMissionDataMissing" class="empty hidden">El archivo privado no contiene las 8 cartas de Misión Imperial. Importa <strong>RAIV_datos_privados_v12.json</strong>.</div>
    <div id="imperialMissionControls">
     <div class="stats">
       <div class="stat"><b id="imperialMissionDeckN">0</b><span>MAZO</span></div>
@@ -388,7 +388,7 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
  <div class="grid two">
   <aside class="panel">
    <h2 class="sectiontitle">Preparar Despliegue</h2>
-   <div id="deploymentDataMissing" class="empty hidden">Este archivo privado no contiene el inventario de Despliegue. Importa <strong>RAIV_datos_privados_v11.json</strong> desde Datos y mantenimiento.</div>
+   <div id="deploymentDataMissing" class="empty hidden">Este archivo privado no contiene el inventario de Despliegue. Importa <strong>RAIV_datos_privados_v12.json</strong> desde Datos y mantenimiento.</div>
    <div id="deploymentSetupControls">
     <label for="deploymentThreat">Nivel de amenaza de la misión</label>
     <select id="deploymentThreat"><option value="2">2 · coste ≤6</option><option value="3">3 · coste ≤8</option><option value="4">4 · coste ≤12</option><option value="5">5+ · todas las no únicas</option></select>
@@ -421,7 +421,7 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
     </div>
     <label for="threatAvailable">Amenaza disponible</label>
     <div class="num-stepper"><button id="threatMinus" class="btn" type="button">−</button><input id="threatAvailable" type="number" min="0" step="1" value="0" readonly inputmode="none"><button id="threatPlus" class="btn" type="button">+</button></div>
-    <div class="row" style="margin-top:8px"><button id="statusAdvice" class="btn">¿Qué toca en Estatus?</button><button id="attemptDeployment" class="btn primary">Intentar despliegue</button></div>
+    <div class="row" style="margin-top:8px"><button id="statusAdvice" class="btn">Fase de Estatus</button><button id="attemptDeployment" class="btn primary">Intentar despliegue</button></div>
     <div id="statusAdviceText" class="status">La app no automatiza todavía los refuerzos figura a figura.</div>
     <div id="deploymentActionText" class="status">Aquí aparecerá el resultado del intento de despliegue.</div>
     <div id="pendingDeployment" class="pending-card hidden">
@@ -465,7 +465,7 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
  </div>
 </section>
 
-<footer style="padding:16px 2px 4px" class="note">PWA v11 · La aplicación pública no contiene los datos privados RAIV, el inventario de Despliegue ni el mazo de Misiones Imperiales.</footer>
+<footer style="padding:16px 2px 4px" class="note">PWA v12 · La aplicación pública no contiene los datos privados RAIV, el inventario de Despliegue ni el mazo de Misiones Imperiales.</footer>
 </div>
 
 <script>
@@ -671,9 +671,18 @@ function restoreSavedState(){
       IMS.active=validImpIds(im.active);
       IMS.resolved=validImpIds(im.resolved);
       IMS.lastNotice=im.lastNotice||"";
+      // Reparación v12: una campaña activa con datos de Misiones Imperiales no puede
+      // tener mazo, activas y resueltas simultáneamente a cero. La v11 podía guardar
+      // ese estado si se abría antes de importar el JSON nuevo.
+      if(CS.active && DATA.imperialMissions?.length &&
+         IMS.deck.length===0 && IMS.active.length===0 && IMS.resolved.length===0){
+        initImperialMissionDeck();
+        IMS.lastNotice="Mazo de Misiones Imperiales creado automáticamente al reparar la migración de v11.";
+        migrationNeedsSave=true;
+      }
     }else if(CS.active && DATA.imperialMissions?.length){
       initImperialMissionDeck();
-      IMS.lastNotice="Mazo de Misiones Imperiales creado al migrar la campaña a v11.";
+      IMS.lastNotice="Mazo de Misiones Imperiales creado al migrar la campaña a v12.";
       migrationNeedsSave=true;
     }else{
       IMS.deck=[];IMS.active=[];IMS.resolved=[];IMS.lastNotice="";
@@ -981,7 +990,7 @@ function renderFinishPreview(){
     if(DATA.deploymentCards?.length){
       if(rc)changes.push(`Desbloquear para la campaña: ${deploymentLabel(rc,false)}`);
       else{changes.push("Selecciona qué Carta de Despliegue se obtuvo.");rewardOk=false;}
-    }else changes.push("Recompensa de Despliegue registrada (importa los datos v11 para gestionar la carta concreta).");
+    }else changes.push("Recompensa de Despliegue registrada (importa los datos v12 para gestionar la carta concreta).");
   }
 
   const mission=activeMission?`${activeMission.title} · ${activeMission.source}`:"No hay misión seleccionada";
@@ -1145,7 +1154,7 @@ function setImperialMissionStatus(t){
   if($("#imperialMissionStatus"))$("#imperialMissionStatus").textContent=IMS.lastNotice||"Sin cambios recientes.";
 }
 function drawImperialMission(ignoreLimit=false){
-  if(!DATA?.imperialMissions?.length)return "No están cargados los datos privados de Misiones Imperiales v11.";
+  if(!DATA?.imperialMissions?.length)return "No están cargados los datos privados de Misiones Imperiales v12.";
   if(!CS.active)return "No hay una campaña activa.";
   if(!ignoreLimit && IMS.active.length){
     const msg="Cambio de Prioridad: ya hay una Misión Imperial en juego. No se roba ninguna carta del mazo.";
@@ -1264,7 +1273,7 @@ function deploymentSort(a,b){
     || (a.copy||1)-(b.copy||1);
 }
 function deploymentOption(c){
-  const cls=c.variant==="Élite"?' class="elite-option"':"";
+  const cls=(c.variant==="Élite"||c.unique)?' class="elite-option"':"";
   return `<option${cls} value="${c.id}">${c.faction} · ${deploymentLabel(c)}</option>`;
 }
 function fillDeploymentPicker(){
@@ -1279,7 +1288,7 @@ function compactSetupItem(id,kind,index){
   const d=document.createElement("div");d.className="dep-item";
   d.innerHTML='<div class="title"></div><div class="small"></div><div class="dep-actions"><button class="btn">Quitar</button></div>';
   d.querySelector('.title').textContent=c.name;
-  if(c.variant==="Élite")d.querySelector('.title').classList.add('elite-text');
+  if(c.variant==="Élite"||c.unique)d.querySelector('.title').classList.add('elite-text');
   d.querySelector('.small').textContent=`${c.variant} · coste ${c.cost}${c.reinforce!=null?` · refuerzo ${c.reinforce}`:""}${c.unique?" · ÚNICA":""}`;
   d.querySelector('button').disabled=DS.prepared;
   d.querySelector('button').onclick=()=>{(kind==="initial"?DS.initialSetup:DS.reserveSetup).splice(index,1);fillDeploymentPicker();renderDeployment();saveState()};
@@ -1319,7 +1328,7 @@ function syncDeploymentIa(){
   renderIa();
 }
 function prepareDeploymentMission(){
-  if(!DATA.deploymentCards?.length){setDeploymentStatus("Importa los datos privados v11 para usar el Mazo de Despliegue.");return}
+  if(!DATA.deploymentCards?.length){setDeploymentStatus("Importa los datos privados v12 para usar el Mazo de Despliegue.");return}
   const threat=Number($("#deploymentThreat").value)||2;
   const open=Math.max(0,Number($("#openGroups").value)||0);
   const excluded=new Set([...DS.initialSetup,...DS.reserveSetup]);
@@ -1352,7 +1361,7 @@ function deploymentItem(id,zone,index){
   const reinforce=c.reinforce!=null?` · refuerzo ${c.reinforce}`:"";
   d.innerHTML='<div class="title"></div><div class="small"></div><div class="dep-actions"></div>';
   d.querySelector('.title').textContent=c.name;
-  if(c.variant==="Élite")d.querySelector('.title').classList.add('elite-text');
+  if(c.variant==="Élite"||c.unique)d.querySelector('.title').classList.add('elite-text');
   d.querySelector('.small').textContent=`${c.variant} · coste ${c.cost}${reinforce}${c.unique?" · ÚNICA":""}`;
   const actions=d.querySelector('.dep-actions');
   if(zone==="deployed"){
@@ -1432,7 +1441,7 @@ $("#prepareDeployment").onclick=prepareDeploymentMission;
 $("#resetDeployment").onclick=()=>{if(!DS.prepared||confirm('¿Reiniciar toda la preparación de Despliegue de esta misión?'))resetDeploymentMission(true)};
 $("#statusAdvice").onclick=()=>{
   if(!DS.prepared){$("#statusAdviceText").textContent='Prepara primero el Mazo y la Mano de Despliegue.';return}
-  if(DS.deployed.length>=4||DS.hand.length===0){$("#statusAdviceText").textContent='RAIV intenta reforzar el primer grupo desde la izquierda que pueda aceptar refuerzos. Si todos están llenos, intenta desplegar. El refuerzo se resuelve manualmente en v11.'}
+  if(DS.deployed.length>=4||DS.hand.length===0){$("#statusAdviceText").textContent='RAIV intenta reforzar el primer grupo desde la izquierda que pueda aceptar refuerzos. Si todos están llenos, intenta desplegar. El refuerzo se resuelve manualmente en v12.'}
   else{$("#statusAdviceText").textContent='Hay menos de 4 grupos: RAIV intenta desplegar un nuevo grupo desde la Mano. Usa “Intentar despliegue”.'}
 };
 $("#attemptDeployment").onclick=attemptStatusDeployment;
@@ -1732,7 +1741,7 @@ function initializeWithData(data,restore=true){
   const depOk=Array.isArray(DATA.deploymentCards)&&DATA.deploymentCards.length;
   const imOk=Array.isArray(DATA.imperialMissions)&&DATA.imperialMissions.length===8;
   const allOk=depOk&&imOk;
-  setDataUi(true,allOk?"Datos privados v11 cargados. Permanecen sólo en este dispositivo.":"Datos privados cargados, pero falta contenido de v11. Sustituye el archivo por RAIV_datos_privados_v11.json.",!allOk);
+  setDataUi(true,allOk?"Datos privados v12 cargados. Permanecen sólo en este dispositivo.":"Datos privados cargados, pero falta contenido de v12. Sustituye el archivo por RAIV_datos_privados_v12.json.",!allOk);
 }
 
 async function importPrivateFile(file){
