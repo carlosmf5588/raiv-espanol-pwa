@@ -20,3 +20,4 @@ La aplicación pública no contiene los textos privados de RAIV, el inventario d
 - Se conserva la migración de guardados de v10.
 
 Para actualizar desde v10, sustituye los archivos públicos del repositorio por los de este ZIP e importa una vez `RAIV_datos_privados_v11.json` en cada dispositivo/navegador que uses.
+Versión atascada en cola en Github
