@@ -1,7 +1,7 @@
 {
   "name": "RAIV Español",
   "short_name": "RAIV",
-  "description": "Asistente RAIV con campaña, Eventos, Misiones Imperiales, Mazo de Despliegue e IA; datos privados locales.",
+  "description": "Asistente RAIV con campaña, Eventos, Misiones Imperiales, Mazo de Despliegue e IA; admite imágenes IA privadas locales.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

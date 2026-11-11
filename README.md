@@ -1,12 +1,22 @@
-# RAIV Español - PWA pública v13
+# RAIV Español - PWA pública v14
 
-La aplicación pública no contiene los textos privados de RAIV, el inventario de cartas de Despliegue ni las cartas del Mazo de Misiones Imperiales. Todo ese contenido permanece en el dispositivo tras importar los datos privados. **v13 no cambia los datos privados**, por lo que si ya importaste `RAIV_datos_privados_v12.json`, no necesitas volver a importarlo.
+La aplicación pública no contiene los textos privados de RAIV, el inventario de cartas de Despliegue, el Mazo de Misiones Imperiales ni las imágenes de las Cartas IA. Todo ese contenido permanece únicamente en el dispositivo.
 
-## Cambios de v13
-- Añade la dificultad **Equilibrada (16/6/3)** para el Mazo de Eventos: 16 cartas de nivel I, 6 de nivel II y 3 de nivel III.
-- Añade **Personalizada**, con controles −/+ para escoger las cantidades de niveles I, II y III. La suma debe ser exactamente 25; se respetan los máximos reales disponibles (22/25/13).
-- Cambia el botón de una Misión Imperial secundaria a **“Los Rebeldes jugaron otra misión secundaria”**; al usarlo, la IA recibe la recompensa correspondiente.
-- Mejora el espaciado en iPad entre las cabeceras **SIN PREPARAR / Vaciar** y el contenido inferior en Despliegue e IA.
-- Mantiene todas las correcciones y migraciones de v12.
+**v14 no cambia el JSON privado**, por lo que si ya importaste `RAIV_datos_privados_v12.json`, no necesitas volver a importarlo.
 
-Para actualizar desde v12, sustituye los archivos públicos del repositorio por los de este ZIP. No hace falta volver a importar el JSON privado si v12 ya estaba cargado correctamente.
+## Cambios de v14
+- Añade soporte opcional para un paquete privado de **56 imágenes de Cartas IA**.
+- Las imágenes se importan desde `RAIV_imagenes_IA_v1.zip` en **Datos y mantenimiento → Imágenes de cartas IA**.
+- Se guardan en **IndexedDB**, separado del JSON privado y del guardado de campaña.
+- El ZIP se importa una sola vez por dispositivo y la consulta funciona sin conexión.
+- Las Cartas IA activas muestran un botón **Ver carta / Ocultar carta** cuando las imágenes están instaladas.
+- Las imágenes sólo se cargan cuando se solicita ver una carta, evitando cargar las 56 a la vez.
+- El paquete completo ocupa aproximadamente **3,8 MB** y cada imagen mide 538 × 815 px en WebP.
+- Mantiene todas las funciones y mejoras de v13, incluidas Equilibrada 16/6/3 y dificultad Personalizada.
+
+## Actualización desde v13
+1. Sustituye los archivos públicos del repositorio por los de `RAIV_v14_publica.zip`.
+2. No vuelvas a importar el JSON privado si v12 ya está cargado.
+3. En cada iPad/navegador donde quieras ver las cartas, abre **Datos y mantenimiento** e importa una vez `RAIV_imagenes_IA_v1.zip`.
+
+El ZIP de imágenes es privado y **no debe subirse al repositorio público**.

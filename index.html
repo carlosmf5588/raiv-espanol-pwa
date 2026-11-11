@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>RAIV Español — PWA v13</title>
+<title>RAIV Español — PWA v14</title>
 <style>
 :root{
   color-scheme:light dark;
@@ -39,6 +39,13 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
 .card{border:2px solid var(--gold);border-radius:18px;padding:18px;min-height:330px;background:var(--panel);white-space:pre-line}
 .card.mission-front{border-color:var(--green)}.card.mission-back{border-color:var(--red)}.card.ia{border-color:var(--orange)}
 .card.plan{border-color:var(--grey)}.card.aid{border-color:var(--orange)}
+.ia-card-visual{margin:12px 0 14px;text-align:center}
+.ia-card-image{display:block;width:min(100%,538px);height:auto;margin:0 auto;border-radius:13px;border:1px solid var(--border);box-shadow:0 4px 18px color-mix(in srgb,#000 16%,transparent)}
+.ia-card-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.ia-card-actions .btn{flex:1;min-width:130px}
+.image-pack-status{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);margin-top:5px}
+.image-pack-dot{width:9px;height:9px;border-radius:50%;background:var(--grey);flex:none}
+.image-pack-dot.ok{background:var(--green)}
 .card h2{font-size:22px;margin:14px 0 12px}.meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .tag{display:inline-flex;border-radius:999px;padding:4px 9px;font-size:11px;font-weight:900;border:1px solid var(--border)}
 .note{font-size:12px;color:var(--muted)}.status{margin-top:12px;border:1px solid var(--border);border-radius:11px;padding:10px;color:var(--muted);font-size:13px}
@@ -153,7 +160,7 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
 <div class="app">
 <header>
  <div>
-   <div class="kicker">PWA v13</div>
+   <div class="kicker">PWA v14</div>
    <h1>RAIV Español</h1>
    <div class="sub">Eventos · Misiones · Misiones Imperiales · Despliegue · IA Imperial</div>
    <details id="maintenance" class="maintenance">
@@ -171,6 +178,12 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
          <div class="data-actions"><label class="btn file-button" style="display:flex;align-items:center;justify-content:center;margin:0">Sustituir datos privados<input id="replacePrivateDataFile" type="file" accept=".json,application/json"></label><button id="forgetPrivateData" class="btn danger">Borrar datos locales</button></div>
        </div>
        <div id="dataMessage" class="status hidden"></div>
+       <div class="subsection">
+         <div class="sectiontitle">Imágenes de cartas IA · opcional</div>
+         <div id="iaImagesStatus" class="image-pack-status"><span id="iaImagesDot" class="image-pack-dot"></span><span id="iaImagesText">Comprobando imágenes…</span></div>
+         <div class="data-actions"><label class="btn file-button" style="display:flex;align-items:center;justify-content:center;margin:0">Importar imágenes IA<input id="iaImagePackFile" type="file" accept=".zip,application/zip"></label><button id="forgetIaImages" class="btn danger">Borrar imágenes IA</button></div>
+         <div class="note" style="margin-top:8px">El paquete privado se guarda en IndexedDB sólo en este dispositivo. No forma parte de GitHub ni del guardado de campaña.</div>
+       </div>
        <div class="subsection"><div class="sectiontitle">Instalación y uso sin conexión</div><div class="note">Abre la dirección de la PWA en el navegador y usa “Añadir a pantalla de inicio”. Tras una primera apertura con Internet, la aplicación puede seguir funcionando sin conexión.</div></div>
      </div>
    </details>
@@ -488,7 +501,7 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
  </div>
 </section>
 
-<footer style="padding:16px 2px 4px" class="note">PWA v13 · La aplicación pública no contiene los datos privados RAIV, el inventario de Despliegue ni el mazo de Misiones Imperiales.</footer>
+<footer style="padding:16px 2px 4px" class="note">PWA v14 · La aplicación pública no contiene los datos privados RAIV, las imágenes de cartas IA, el inventario de Despliegue ni el mazo de Misiones Imperiales.</footer>
 </div>
 
 <script>
@@ -505,6 +518,10 @@ function drawOne(pool){if(!pool.length)return null;return pool.splice(Math.floor
 // ---------- GUARDADO AUTOMÁTICO ----------
 const SAVE_KEY="raiv_espanol_v7_state";
 const DATA_KEY="raiv_espanol_v7_private_data";
+const IA_IMAGE_DB="raiv_espanol_private_images_v1";
+const IA_IMAGE_STORE="iaImages";
+let iaImageCount=0;
+const iaImageUrlCache=new Map();
 let suppressSave=true;
 let migrationNeedsSave=false;
 
@@ -1721,11 +1738,43 @@ function renderIa(){
     const d=document.createElement("div");
     d.className="card ia";
     d.style.minHeight="0";
-    d.innerHTML='<div class="meta"><span class="tag">IA IMPERIAL</span><span class="tag range"></span></div><h2></h2><div class="body"></div><button class="btn" style="margin-top:14px">Quitar</button>';
+    d.innerHTML='<div class="meta"><span class="tag">IA IMPERIAL</span><span class="tag range"></span></div><h2></h2><div class="ia-card-visual hidden"></div><div class="body"></div><div class="ia-card-actions"><button class="btn ia-image-toggle hidden" type="button">Ver carta</button><button class="btn ia-remove" type="button">Quitar</button></div>';
     d.querySelector("h2").textContent=c.title;
     d.querySelector(".range").textContent=c.range?("Alcance "+c.range):"Alcance según carta";
     d.querySelector(".body").textContent=c.body;
-    d.querySelector("button").onclick=()=>{iaActive.splice(idx,1);renderIa()};
+    const visual=d.querySelector(".ia-card-visual");
+    const imageBtn=d.querySelector(".ia-image-toggle");
+    if(iaImageCount>0){
+      imageBtn.classList.remove("hidden");
+      imageBtn.onclick=async()=>{
+        if(!visual.classList.contains("hidden")){
+          visual.classList.add("hidden");
+          imageBtn.textContent="Ver carta";
+          return;
+        }
+        visual.classList.remove("hidden");
+        imageBtn.textContent="Ocultar carta";
+        if(visual.dataset.loaded==="1")return;
+        visual.innerHTML='<div class="status">Cargando imagen…</div>';
+        try{
+          const url=await getIaImageUrl(c.id);
+          if(!url){
+            visual.innerHTML='<div class="status">No se encontró la imagen de esta carta en el paquete importado.</div>';
+            return;
+          }
+          const img=document.createElement("img");
+          img.className="ia-card-image";
+          img.alt="Carta IA: "+c.title;
+          img.src=url;
+          visual.innerHTML="";
+          visual.appendChild(img);
+          visual.dataset.loaded="1";
+        }catch(err){
+          visual.innerHTML='<div class="status">No se pudo cargar la imagen.</div>';
+        }
+      };
+    }
+    d.querySelector(".ia-remove").onclick=()=>{iaActive.splice(idx,1);renderIa()};
     box.appendChild(d);
   });
   saveState();
@@ -1744,6 +1793,146 @@ $("#addIa").onclick=()=>{
   }
 };
 $("#clearIa").onclick=()=>{iaActive=[];renderIa()};
+
+function openIaImageDb(){
+  return new Promise((resolve,reject)=>{
+    if(!("indexedDB" in window))return reject(new Error("Este navegador no admite almacenamiento de imágenes local."));
+    const req=indexedDB.open(IA_IMAGE_DB,1);
+    req.onupgradeneeded=()=>{
+      const db=req.result;
+      if(!db.objectStoreNames.contains(IA_IMAGE_STORE))db.createObjectStore(IA_IMAGE_STORE);
+    };
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error||new Error("No se pudo abrir el almacenamiento de imágenes."));
+  });
+}
+
+async function refreshIaImageStatus(){
+  try{
+    const db=await openIaImageDb();
+    iaImageCount=await new Promise((resolve,reject)=>{
+      const req=db.transaction(IA_IMAGE_STORE,"readonly").objectStore(IA_IMAGE_STORE).count();
+      req.onsuccess=()=>resolve(req.result||0);
+      req.onerror=()=>reject(req.error);
+    });
+    db.close();
+  }catch(_){iaImageCount=0}
+  const dot=$("#iaImagesDot"), text=$("#iaImagesText"), del=$("#forgetIaImages");
+  if(dot)dot.classList.toggle("ok",iaImageCount>0);
+  if(text)text.textContent=iaImageCount?`${iaImageCount} / 56 imágenes IA instaladas en este dispositivo.`:"Imágenes IA no instaladas.";
+  if(del)del.disabled=!iaImageCount;
+  if(DATA)renderIa();
+}
+
+function parseStoredZip(buffer){
+  const view=new DataView(buffer);
+  const bytes=new Uint8Array(buffer);
+  const dec=new TextDecoder("utf-8");
+  const out=new Map();
+  let p=0;
+  while(p+4<=view.byteLength){
+    const sig=view.getUint32(p,true);
+    if(sig===0x04034b50){
+      if(p+30>view.byteLength)throw new Error("ZIP incompleto.");
+      const flags=view.getUint16(p+6,true);
+      const method=view.getUint16(p+8,true);
+      const compSize=view.getUint32(p+18,true);
+      const nameLen=view.getUint16(p+26,true);
+      const extraLen=view.getUint16(p+28,true);
+      if(flags&0x08)throw new Error("El paquete ZIP usa un formato no compatible.");
+      if(method!==0)throw new Error("El paquete debe ser el ZIP privado RAIV original, sin recompresión.");
+      const nameStart=p+30;
+      const dataStart=nameStart+nameLen+extraLen;
+      const dataEnd=dataStart+compSize;
+      if(dataEnd>view.byteLength)throw new Error("ZIP incompleto.");
+      const name=dec.decode(bytes.slice(nameStart,nameStart+nameLen));
+      out.set(name,buffer.slice(dataStart,dataEnd));
+      p=dataEnd;
+      continue;
+    }
+    if(sig===0x02014b50||sig===0x06054b50)break;
+    throw new Error("Estructura ZIP no reconocida.");
+  }
+  return out;
+}
+
+async function importIaImagePack(file){
+  if(!file)return;
+  const status=$("#iaImagesText");
+  if(status)status.textContent="Importando imágenes IA…";
+  try{
+    const entries=parseStoredZip(await file.arrayBuffer());
+    const manifestBuf=entries.get("manifest.json");
+    if(!manifestBuf)throw new Error("Falta manifest.json.");
+    const manifest=JSON.parse(new TextDecoder("utf-8").decode(new Uint8Array(manifestBuf)));
+    if(manifest.format!=="raiv-espanol-ia-images"||manifest.schema!==1||!Array.isArray(manifest.cards))throw new Error("No es un paquete de imágenes IA RAIV válido.");
+    if(manifest.cards.length!==56)throw new Error(`El paquete contiene ${manifest.cards.length} cartas; se esperaban 56.`);
+    const seen=new Set();
+    const cards=[];
+    for(const item of manifest.cards){
+      if(!item||!/^ia-\d+$/.test(item.id)||!item.file||seen.has(item.id))throw new Error("El índice de imágenes no es válido.");
+      const buf=entries.get(item.file);
+      if(!buf)throw new Error("Falta la imagen "+item.id+".");
+      seen.add(item.id);
+      cards.push([item.id,new Blob([buf],{type:"image/webp"})]);
+    }
+    if(DATA){
+      const expected=new Set(DATA.ia.map(c=>c.id));
+      if(cards.some(([id])=>!expected.has(id))||expected.size!==cards.length)throw new Error("El paquete no coincide con las cartas IA de estos datos privados.");
+    }
+    const db=await openIaImageDb();
+    await new Promise((resolve,reject)=>{
+      const tx=db.transaction(IA_IMAGE_STORE,"readwrite");
+      const store=tx.objectStore(IA_IMAGE_STORE);
+      store.clear();
+      for(const [id,blob] of cards)store.put(blob,id);
+      tx.oncomplete=resolve;
+      tx.onerror=()=>reject(tx.error||new Error("No se pudieron guardar las imágenes."));
+      tx.onabort=()=>reject(tx.error||new Error("No se pudieron guardar las imágenes."));
+    });
+    db.close();
+    for(const url of iaImageUrlCache.values())URL.revokeObjectURL(url);
+    iaImageUrlCache.clear();
+    await refreshIaImageStatus();
+  }catch(err){
+    await refreshIaImageStatus();
+    if(status)status.textContent="No se pudo importar el paquete: "+err.message+(iaImageCount?" · Las imágenes anteriores se conservan.":"");
+  }finally{
+    const input=$("#iaImagePackFile"); if(input)input.value="";
+  }
+}
+
+async function getIaImageUrl(id){
+  if(iaImageUrlCache.has(id))return iaImageUrlCache.get(id);
+  const db=await openIaImageDb();
+  const blob=await new Promise((resolve,reject)=>{
+    const req=db.transaction(IA_IMAGE_STORE,"readonly").objectStore(IA_IMAGE_STORE).get(id);
+    req.onsuccess=()=>resolve(req.result||null);
+    req.onerror=()=>reject(req.error);
+  });
+  db.close();
+  if(!blob)return null;
+  const url=URL.createObjectURL(blob);
+  iaImageUrlCache.set(id,url);
+  return url;
+}
+
+async function clearIaImages(){
+  try{
+    const db=await openIaImageDb();
+    await new Promise((resolve,reject)=>{
+      const tx=db.transaction(IA_IMAGE_STORE,"readwrite");
+      tx.objectStore(IA_IMAGE_STORE).clear();
+      tx.oncomplete=resolve;
+      tx.onerror=()=>reject(tx.error);
+    });
+    db.close();
+  }catch(_){}
+  for(const url of iaImageUrlCache.values())URL.revokeObjectURL(url);
+  iaImageUrlCache.clear();
+  iaImageCount=0;
+  await refreshIaImageStatus();
+}
 
 function validatePrivatePayload(payload){
   if(!payload || payload.format!=="raiv-espanol-private-data" || payload.schema!==1 || !payload.data){
@@ -1835,15 +2024,24 @@ async function importPrivateFile(file){
   }
 }
 
+$("#iaImagePackFile").addEventListener("change",e=>importIaImagePack(e.target.files[0]));
+$("#forgetIaImages").addEventListener("click",async()=>{
+  if(!confirm("¿Borrar de este dispositivo las imágenes privadas de Cartas IA?"))return;
+  await clearIaImages();
+});
+
 $("#privateDataFile").addEventListener("change",e=>importPrivateFile(e.target.files[0]));
 $("#replacePrivateDataFile").addEventListener("change",e=>importPrivateFile(e.target.files[0]));
 
-$("#forgetPrivateData").addEventListener("click",()=>{
-  if(!confirm("¿Borrar de este dispositivo los datos privados RAIV y la partida guardada?"))return;
+$("#forgetPrivateData").addEventListener("click",async()=>{
+  if(!confirm("¿Borrar de este dispositivo los datos privados RAIV, las imágenes IA y la partida guardada?"))return;
   localStorage.removeItem(DATA_KEY);
   localStorage.removeItem(SAVE_KEY);
+  await clearIaImages();
   location.reload();
 });
+
+refreshIaImageStatus();
 
 try{
   const stored=loadStoredPrivateData();
