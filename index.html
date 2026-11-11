@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>RAIV Español — PWA v12</title>
+<title>RAIV Español — PWA v13</title>
 <style>
 :root{
   color-scheme:light dark;
@@ -126,6 +126,13 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
 .imperial-mission-card h3{margin:3px 0 5px;font-size:17px}
 .imperial-mission-card .actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
 .imperial-mission-card .actions .btn{min-height:38px;font-size:13px;padding:6px 9px}
+.section-head{margin-bottom:12px}
+.custom-difficulty{margin-top:10px;border:1px solid var(--border);border-radius:12px;padding:10px;background:color-mix(in srgb,var(--blue) 5%,var(--panel))}
+.custom-difficulty .custom-row{display:grid;grid-template-columns:82px 1fr;gap:8px;align-items:center;margin-top:7px}
+.custom-difficulty .custom-row:first-of-type{margin-top:0}
+.custom-difficulty .custom-label{font-size:13px;font-weight:850}
+.custom-total{margin-top:9px;font-size:12px;color:var(--muted);font-weight:750}
+.custom-total.invalid{color:var(--red)}
 
 .global-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 @media(max-width:900px){.global-grid{grid-template-columns:1fr}}
@@ -146,7 +153,7 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
 <div class="app">
 <header>
  <div>
-   <div class="kicker">PWA v12</div>
+   <div class="kicker">PWA v13</div>
    <h1>RAIV Español</h1>
    <div class="sub">Eventos · Misiones · Misiones Imperiales · Despliegue · IA Imperial</div>
    <details id="maintenance" class="maintenance">
@@ -189,9 +196,17 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
     <option value="standard">Estándar · 25 al azar</option>
     <option value="initiate">Iniciado · muy baja</option>
     <option value="padawan">Padawan · baja</option>
+    <option value="balanced">Equilibrada · 16 I / 6 II / 3 III</option>
     <option value="knight">Caballero Jedi · media</option>
     <option value="master">Maestro Jedi · alta</option>
+    <option value="custom">Personalizada</option>
    </select>
+   <div id="campaignCustomDifficulty" class="custom-difficulty hidden">
+    <div class="custom-row"><span class="custom-label">Nivel I</span><div class="num-stepper"><button class="btn custom-minus" data-scope="campaign" data-level="I" type="button">−</button><input id="campaignCustomI" value="16" readonly inputmode="none"><button class="btn custom-plus" data-scope="campaign" data-level="I" type="button">+</button></div></div>
+    <div class="custom-row"><span class="custom-label">Nivel II</span><div class="num-stepper"><button class="btn custom-minus" data-scope="campaign" data-level="II" type="button">−</button><input id="campaignCustomII" value="6" readonly inputmode="none"><button class="btn custom-plus" data-scope="campaign" data-level="II" type="button">+</button></div></div>
+    <div class="custom-row"><span class="custom-label">Nivel III</span><div class="num-stepper"><button class="btn custom-minus" data-scope="campaign" data-level="III" type="button">−</button><input id="campaignCustomIII" value="3" readonly inputmode="none"><button class="btn custom-plus" data-scope="campaign" data-level="III" type="button">+</button></div></div>
+    <div id="campaignCustomTotal" class="custom-total">Total: 25 / 25</div>
+   </div>
    <button id="startCampaign" class="btn primary" style="width:100%;margin-top:10px">Iniciar nueva campaña</button>
    <div class="status">Crea el Mazo de Eventos inicial y empieza un historial nuevo. Si ya hay una campaña, se pedirá confirmación antes de sustituirla.</div>
   </aside>
@@ -253,9 +268,17 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
     <option value="standard">Estándar · 25 al azar</option>
     <option value="initiate">Iniciado · muy baja</option>
     <option value="padawan">Padawan · baja</option>
+    <option value="balanced">Equilibrada · 16 I / 6 II / 3 III</option>
     <option value="knight">Caballero Jedi · media</option>
     <option value="master">Maestro Jedi · alta</option>
+    <option value="custom">Personalizada</option>
    </select>
+   <div id="eventCustomDifficulty" class="custom-difficulty hidden">
+    <div class="custom-row"><span class="custom-label">Nivel I</span><div class="num-stepper"><button class="btn custom-minus" data-scope="event" data-level="I" type="button">−</button><input id="eventCustomI" value="16" readonly inputmode="none"><button class="btn custom-plus" data-scope="event" data-level="I" type="button">+</button></div></div>
+    <div class="custom-row"><span class="custom-label">Nivel II</span><div class="num-stepper"><button class="btn custom-minus" data-scope="event" data-level="II" type="button">−</button><input id="eventCustomII" value="6" readonly inputmode="none"><button class="btn custom-plus" data-scope="event" data-level="II" type="button">+</button></div></div>
+    <div class="custom-row"><span class="custom-label">Nivel III</span><div class="num-stepper"><button class="btn custom-minus" data-scope="event" data-level="III" type="button">−</button><input id="eventCustomIII" value="3" readonly inputmode="none"><button class="btn custom-plus" data-scope="event" data-level="III" type="button">+</button></div></div>
+    <div id="eventCustomTotal" class="custom-total">Total: 25 / 25</div>
+   </div>
    <button id="buildDeck" class="btn primary" style="width:100%;margin-top:10px">Crear mazo</button>
    <div class="stats">
     <div class="stat"><b id="deckN">0</b><span>MAZO</span></div>
@@ -412,7 +435,7 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
 
   <main class="grid">
    <div class="panel">
-    <div class="meta"><h2 class="sectiontitle">Estado de Despliegue</h2><span id="deploymentPreparedTag" class="tag">SIN PREPARAR</span></div>
+    <div class="meta section-head"><h2 class="sectiontitle">Estado de Despliegue</h2><span id="deploymentPreparedTag" class="tag">SIN PREPARAR</span></div>
     <div class="deployment-stats">
       <div class="stat"><b id="depDeckN">0</b><span>MAZO RESTANTE</span></div>
       <div class="stat"><b id="depHandN">0</b><span>MANO OCULTA</span></div>
@@ -459,13 +482,13 @@ select,input{width:100%;min-height:44px;border:1px solid var(--border);border-ra
    <div class="status">Añade las Cartas de IA de los grupos de despliegue que estén en juego. Puedes mantener varias abiertas a la vez.</div>
   </aside>
   <main class="panel">
-   <div class="meta"><h2 class="sectiontitle">IA activa</h2><button id="clearIa" class="btn">Vaciar</button></div>
+   <div class="meta section-head"><h2 class="sectiontitle">IA activa</h2><button id="clearIa" class="btn">Vaciar</button></div>
    <div id="iaActive" class="list"></div>
   </main>
  </div>
 </section>
 
-<footer style="padding:16px 2px 4px" class="note">PWA v12 · La aplicación pública no contiene los datos privados RAIV, el inventario de Despliegue ni el mazo de Misiones Imperiales.</footer>
+<footer style="padding:16px 2px 4px" class="note">PWA v13 · La aplicación pública no contiene los datos privados RAIV, el inventario de Despliegue ni el mazo de Misiones Imperiales.</footer>
 </div>
 
 <script>
@@ -491,7 +514,8 @@ const CS={
   difficulty:"standard",
   startedAt:null,
   history:[],
-  deploymentRewards:[]
+  deploymentRewards:[],
+  customMix:{I:16,II:6,III:3}
 };
 
 const IMS={
@@ -537,6 +561,7 @@ function snapshotState(){
     savedAt:Date.now(),
     activeTab:activeTabName(),
     difficulty:$("#difficulty")?$("#difficulty").value:"standard",
+    customMix:{...customMix},
     events:{
       deck:cardsToIds(ES.deck),
       discard:cardsToIds(ES.discard),
@@ -562,7 +587,8 @@ function snapshotState(){
       difficulty:CS.difficulty||($("#difficulty")?$("#difficulty").value:"standard"),
       startedAt:CS.startedAt||null,
       history:Array.isArray(CS.history)?CS.history:[],
-      deploymentRewards:Array.isArray(CS.deploymentRewards)?CS.deploymentRewards:[]
+      deploymentRewards:Array.isArray(CS.deploymentRewards)?CS.deploymentRewards:[],
+      customMix:{...(CS.customMix||customMix)}
     },
     imperialMissions:{
       deck:[...IMS.deck],
@@ -608,6 +634,7 @@ function restoreSavedState(){
   try{
     const s=JSON.parse(raw);
 
+    if(s.customMix) customMix=normalizeCustomMix(s.customMix);
     if(s.difficulty && $("#difficulty")) $("#difficulty").value=s.difficulty;
 
     const e=s.events||{};
@@ -651,6 +678,7 @@ function restoreSavedState(){
       CS.startedAt=c.startedAt||s.savedAt||Date.now();
       CS.history=Array.isArray(c.history)?c.history:[];
       CS.deploymentRewards=Array.isArray(c.deploymentRewards)?c.deploymentRewards.filter(id=>DEP_BY_ID.has(id)):[];
+      CS.customMix=normalizeCustomMix(c.customMix||s.customMix||customMix);
     }else{
       // Migración transparente desde v7/v8: conserva la partida actual
       // sin inventar un historial anterior.
@@ -660,9 +688,12 @@ function restoreSavedState(){
       CS.startedAt=s.savedAt||Date.now();
       CS.history=[];
       CS.deploymentRewards=[];
+      CS.customMix=normalizeCustomMix(s.customMix||customMix);
     }
     if($("#campaignDifficulty"))$("#campaignDifficulty").value=CS.difficulty;
     if($("#campaignName") && CS.name!=="Campaña existente")$("#campaignName").value=CS.name;
+    customMix={...CS.customMix};
+    syncCustomDifficultyUI();
 
     const im=s.imperialMissions||null;
     const validImpIds=arr=>(Array.isArray(arr)?arr:[]).filter(id=>IMP_MISSION_BY_ID.has(id));
@@ -740,17 +771,56 @@ const ES={
 const mixes={
   initiate:{I:22,II:3,III:0},
   padawan:{I:13,II:12,III:0},
+  balanced:{I:16,II:6,III:3},
   knight:{I:8,II:9,III:8},
   master:{I:0,II:12,III:13}
 };
+const CUSTOM_MAX={I:22,II:25,III:13};
+let customMix={I:16,II:6,III:3};
+function normalizeCustomMix(m){
+  const out={};
+  for(const lvl of ["I","II","III"]){
+    const n=Number(m?.[lvl]);
+    out[lvl]=Math.max(0,Math.min(CUSTOM_MAX[lvl],Number.isFinite(n)?Math.round(n):({I:16,II:6,III:3}[lvl])));
+  }
+  return out;
+}
+function customMixTotal(){return customMix.I+customMix.II+customMix.III}
+function customMixValid(){return customMixTotal()===25}
+function customDifficultyLabel(m=customMix){return `Personalizada · ${m.I}/${m.II}/${m.III}`}
+function syncCustomDifficultyUI(){
+  for(const scope of ["campaign","event"]){
+    const prefix=scope==="campaign"?"campaign":"event";
+    for(const lvl of ["I","II","III"]){const el=$("#"+prefix+"Custom"+lvl);if(el)el.value=customMix[lvl]}
+    const select=$(scope==="campaign"?"#campaignDifficulty":"#difficulty");
+    const panel=$("#"+prefix+"CustomDifficulty");
+    if(panel&&select)panel.classList.toggle("hidden",select.value!=="custom");
+    const total=$("#"+prefix+"CustomTotal");
+    if(total){total.textContent=`Total: ${customMixTotal()} / 25`;total.classList.toggle("invalid",!customMixValid())}
+  }
+  const campaignCustom=$("#campaignDifficulty")?.value==="custom";
+  const eventCustom=$("#difficulty")?.value==="custom";
+  if($("#startCampaign"))$("#startCampaign").disabled=campaignCustom&&!customMixValid();
+  if($("#buildDeck"))$("#buildDeck").disabled=eventCustom&&!customMixValid();
+}
+function changeCustomMix(level,delta){
+  customMix[level]=Math.max(0,Math.min(CUSTOM_MAX[level],customMix[level]+delta));
+  syncCustomDifficultyUI();
+  saveState();
+}
+
 
 function setEventStatus(t){$("#eventStatus").textContent=t}
 
 function build(){
   let chosen=[], mode=$("#difficulty").value;
   if(mode==="standard") chosen=shuffle(DATA.events).slice(0,25);
-  else for(const [lvl,n] of Object.entries(mixes[mode])){
-    chosen.push(...shuffle(DATA.events.filter(c=>c.level===lvl)).slice(0,n));
+  else{
+    const mix=mode==="custom"?customMix:mixes[mode];
+    if(!mix || (mode==="custom"&&!customMixValid())){setEventStatus("La dificultad personalizada debe sumar exactamente 25 cartas.");return false}
+    for(const [lvl,n] of Object.entries(mix)){
+      chosen.push(...shuffle(DATA.events.filter(c=>c.level===lvl)).slice(0,n));
+    }
   }
   ES.planPool=shuffle(DATA.plans);
   ES.aidPool=shuffle(DATA.aids);
@@ -761,6 +831,7 @@ function build(){
   ES.built=true;
   setEventStatus("Mazo creado: 25 Eventos + 1 Plan Secreto + 1 Ayuda Rebelde.");
   renderEvents();
+  return true;
 }
 
 function insertRandom(card){
@@ -917,7 +988,10 @@ $("#discard").onclick=()=>{
 };
 $("#addPlan").onclick=()=>addSpecial("plan");
 $("#addAid").onclick=()=>addSpecial("aid");
-$("#difficulty").onchange=()=>saveState();
+$("#difficulty").onchange=()=>{syncCustomDifficultyUI();saveState()};
+$("#campaignDifficulty").onchange=()=>{syncCustomDifficultyUI();saveState()};
+$$('.custom-minus').forEach(b=>b.onclick=()=>changeCustomMix(b.dataset.level,-1));
+$$('.custom-plus').forEach(b=>b.onclick=()=>changeCustomMix(b.dataset.level,1));
 
 
 // ---------- CAMPAÑA ----------
@@ -925,6 +999,8 @@ const DIFFICULTY_LABELS={
   standard:"Estándar",
   initiate:"Iniciado",
   padawan:"Padawan",
+  balanced:"Equilibrada",
+  custom:"Personalizada",
   knight:"Caballero Jedi",
   master:"Maestro Jedi"
 };
@@ -956,7 +1032,7 @@ function renderCampaign(){
 
   const counts=campaignCounts();
   $("#campaignTitle").textContent=CS.name||"Campaña RAIV";
-  $("#campaignDifficultyLabel").textContent=DIFFICULTY_LABELS[CS.difficulty]||CS.difficulty;
+  $("#campaignDifficultyLabel").textContent=CS.difficulty==="custom"?customDifficultyLabel(CS.customMix||customMix):(DIFFICULTY_LABELS[CS.difficulty]||CS.difficulty);
   $("#campaignMissionCount").textContent=(CS.history||[]).length;
   $("#campaignPlanCount").textContent=counts.plan;
   $("#campaignAidCount").textContent=counts.aid;
@@ -1040,16 +1116,18 @@ function startNewCampaign(name,mode){
   CS.startedAt=Date.now();
   CS.history=[];
   CS.deploymentRewards=[];
+  CS.customMix={...customMix};
   initImperialMissionDeck();
   resetDeploymentMission(false);
 
   $("#difficulty").value=CS.difficulty;
   $("#campaignDifficulty").value=CS.difficulty;
+  syncCustomDifficultyUI();
   $("#campaignName").value=CS.name==="Campaña RAIV"?"":CS.name;
 
   iaActive=[];
   renderIa();
-  build();
+  if(build()===false)return;
   setEventStatus("Nueva campaña iniciada. Mazo de Eventos preparado.");
   renderCampaign();
   saveState();
@@ -1213,7 +1291,7 @@ function imperialMissionItem(id,resolved=false){
     const done=document.createElement("button");done.className="btn primary";done.textContent="Marcar resuelta / retirada";done.onclick=()=>closeImperialMission(id,false);
     actions.append(open,done);
     if(c.type==="secondary"){
-      const ignored=document.createElement("button");ignored.className="btn soft";ignored.textContent="Se jugó otra secundaria → recompensa IA";ignored.onclick=()=>{
+      const ignored=document.createElement("button");ignored.className="btn soft";ignored.textContent="Los Rebeldes jugaron otra misión secundaria";ignored.onclick=()=>{
         if(confirm(`¿Confirmar que se resolvió otra misión secundaria y que la IA obtiene la recompensa de ${c.name}?`))closeImperialMission(id,true);
       };
       actions.append(ignored);
@@ -1777,6 +1855,7 @@ try{
     setSaveIndicator("Esperando datos privados",true);
   }
 }catch(err){
+  syncCustomDifficultyUI();
   suppressSave=false;
   try{localStorage.removeItem(DATA_KEY)}catch(_){}
   setDataUi(false,"Los datos guardados no se pudieron leer. Vuelve a importar el archivo privado.",true);

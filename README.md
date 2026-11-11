@@ -1,13 +1,12 @@
-# RAIV Español - PWA pública v12
+# RAIV Español - PWA pública v13
 
-La aplicación pública no contiene los textos privados de RAIV, el inventario de cartas de Despliegue ni las cartas del Mazo de Misiones Imperiales. Todo ese contenido se importa desde `RAIV_datos_privados_v12.json` y permanece en el dispositivo.
+La aplicación pública no contiene los textos privados de RAIV, el inventario de cartas de Despliegue ni las cartas del Mazo de Misiones Imperiales. Todo ese contenido permanece en el dispositivo tras importar los datos privados. **v13 no cambia los datos privados**, por lo que si ya importaste `RAIV_datos_privados_v12.json`, no necesitas volver a importarlo.
 
-## Correcciones de v12
-- Repara automáticamente el caso de migración de v11 en el que el **Mazo de Misiones Imperiales** podía quedar guardado como 0/0/0. Si hay una campaña activa y las 8 cartas están disponibles, vuelve a crear y barajar el mazo sin tocar el resto de la campaña.
-- La pestaña pasa a llamarse **Misiones Imperiales**.
-- El botón de consulta de la fase pasa a llamarse **Fase de Estatus**.
-- En los selectores de Despliegue, las cartas **únicas** se muestran en rojo, igual que las élite.
-- Se repara la indexación completa de las 26 Cartas de Misión de **Waves 1–7**, emparejando anverso y reverso por página. Esto corrige `Acorralado` y las demás entradas cuyo título había quedado sustituido por una línea de evento.
-- Se conserva la migración de guardados y los datos de campaña de versiones anteriores.
+## Cambios de v13
+- Añade la dificultad **Equilibrada (16/6/3)** para el Mazo de Eventos: 16 cartas de nivel I, 6 de nivel II y 3 de nivel III.
+- Añade **Personalizada**, con controles −/+ para escoger las cantidades de niveles I, II y III. La suma debe ser exactamente 25; se respetan los máximos reales disponibles (22/25/13).
+- Cambia el botón de una Misión Imperial secundaria a **“Los Rebeldes jugaron otra misión secundaria”**; al usarlo, la IA recibe la recompensa correspondiente.
+- Mejora el espaciado en iPad entre las cabeceras **SIN PREPARAR / Vaciar** y el contenido inferior en Despliegue e IA.
+- Mantiene todas las correcciones y migraciones de v12.
 
-Para actualizar desde v11, sustituye los archivos públicos del repositorio por los de este ZIP e importa una vez `RAIV_datos_privados_v12.json` en cada dispositivo/navegador que uses.
+Para actualizar desde v12, sustituye los archivos públicos del repositorio por los de este ZIP. No hace falta volver a importar el JSON privado si v12 ya estaba cargado correctamente.
